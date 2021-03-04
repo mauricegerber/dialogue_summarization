@@ -30,6 +30,8 @@ for i in range(len(df)):
 
 html = df.to_html()
 
+nltk.download()
+
 # Save pandas dataFrame as html table
 text_file = open("index.html", "w")
 text_file.write(html)
