@@ -14,7 +14,7 @@ from summa import keywords
 from pytopicrank import TopicRank
 
 # Themes can be found at https://www.bootstrapcdn.com/bootswatch/
-BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/litera/bootstrap.min.css"
+BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/lux/bootstrap.min.css"
 app = dash.Dash(external_stylesheets=[BS])
 
 transcripts = os.listdir("./transcripts")
