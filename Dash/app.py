@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -5,29 +6,31 @@ import plotly.graph_objects as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import dash_table
-import os
+import dash_bootstrap_components as dbc
 
 from summa import keywords
 from pytopicrank import TopicRank
 
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+# Themes can be found at https://www.bootstrapcdn.com/bootswatch/
+BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/litera/bootstrap.min.css"
+app = dash.Dash(external_stylesheets=[BS])
 
 transcripts = os.listdir("./transcripts")
-initial_transcript_index = 4
+initial_transcript_index = 2
 initial_transcript = pd.read_csv("./transcripts/" + transcripts[initial_transcript_index])
 
 app.layout = dbc.Container(
     [
-        html.H1("Web Application Dashboards with Dash", style={'text-align': 'center'}),
-        
+        html.Br(),
+        html.H1("Dialog Summarization", style={"text-align": "center"}),
+        html.Br(),
         dbc.Row(
             [
                 dbc.Col(
                     [
-                        dcc.Dropdown(
+                        dbc.Select(
                             id="transcript_selector",
                             options=[{"label": i, "value": i} for i in transcripts],
                             value=transcripts[initial_transcript_index],
@@ -37,7 +40,7 @@ app.layout = dbc.Container(
                 ),
                 dbc.Col(
                     [
-                        dcc.Checklist(
+                        dbc.Checklist(
                             id="keyword_extraction_method_selector",
                             options=[
                                 {"label": "Word frequency", "value": "word_frequency"},
@@ -45,13 +48,12 @@ app.layout = dbc.Container(
                                 {"label": "TextRank", "value": "textrank"},
                                 {"label": "TopicRank", "value": "topicrank"},
                                 {"label": "YAKE!", "value": "yake"},
-                                {"label": "BERT", "value": "bert"}
+                                {"label": "BERT", "value": "bert"},
                             ],
                             value=[],
-                            labelStyle={
-                                "display": "block"
-                            },
+                            switch=True,
                         ),
+                        dbc.Button("Apply", id="keyword_extraction_apply_button"),
                     ],
                     width=3,
                 ),
@@ -64,44 +66,42 @@ app.layout = dbc.Container(
                     [
                         dbc.Tabs(
                             [
-                                dbc.Tab(label="Transcript", tab_id="tab1", children=[
-                                    html.Br(),
-                                    dash_table.DataTable(
-                                        id="transcript_table",
-                                        columns=[
-                                            {"name": "Speaker", "id": "speaker"},
-                                            {"name": "Timestamp", "id": "minute"},
-                                            {"name": "Text", "id": "text"}
+                                dbc.Tab(label="Transcript", children=[
+                                    html.Div(
+                                        [
+                                            html.Br(),
+                                            html.H5("Select speaker:"),
+                                            dbc.Checklist(
+                                                id="speaker_selector",
+                                                options=[{"label": i, "value": i}
+                                                         for i in initial_transcript.speaker.unique()],
+                                                value=initial_transcript.speaker.unique(),
+                                            ),
                                         ],
-                                        data=initial_transcript.to_dict("records"),
-                                        style_cell={
-                                            "font-family": "sans-serif",
-                                            "white-space": "normal",
-                                            "text-align": "left"
+                                        style={
+                                            "width": "300px"
                                         },
-                                        editable=False,
+                                    ),
+                                    html.Br(),
+                                    html.Div(id="transcript_table", children=[
+                                        dbc.Table.from_dataframe(initial_transcript, bordered=True, hover=True)
+                                    ],
                                     ),
                                 ],
                                 ),
-                                dbc.Tab(label="Keywords", tab_id="tab2", children=[
-                                    dash_table.DataTable(
-                                        id="keywords_table",
-                                        style_cell={
-                                            "font-family": "sans-serif",
-                                            "white-space": "normal",
-                                            "text-align": "left"
-                                        },
-                                        editable=False,
+                                dbc.Tab(label="Keywords", children=[
+                                    html.Br(),
+                                    html.Div(id="keyword_table", children=[
+                                        dbc.Table.from_dataframe(initial_transcript, bordered=True, hover=True)
+                                    ],
                                     ),
-                                    html.Div(id='output_container', children=[]),
                                 ],
                                 ),
-                                dbc.Tab(label="Plots", tab_id="tab3", children=[
+                                dbc.Tab(label="Plots", children=[
                                     dcc.Graph(id="speakers_ratio", figure={}),
                                 ],
                                 ),
                             ],
-                            id="tabs"
                         ),
                     ],
                 ),
@@ -112,22 +112,36 @@ app.layout = dbc.Container(
 )
 
 @app.callback(
-    Output(component_id="transcript_table", component_property="data"),
+    Output(component_id="transcript_table", component_property="children"),
+    Output(component_id="speaker_selector", component_property="options"),
+    Output(component_id="speaker_selector", component_property="value"),
     Input(component_id="transcript_selector", component_property="value"),
+    Input(component_id="speaker_selector", component_property="value"),
 )
-def update_transcript_table(selected_transcript):
-    return pd.read_csv("./transcripts/" + selected_transcript).to_dict("records")
+def update_transcript_table_and_filters(selected_transcript, selected_speakers):
+    transcript = pd.read_csv("./transcripts/" + selected_transcript)
+    
+    if dash.callback_context.triggered[0]["prop_id"] == "transcript_selector.value":
+        speakers = transcript.speaker.unique()
+        table = dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
+        return table, [{"label": i, "value": i} for i in speakers], speakers
+    
+    if dash.callback_context.triggered[0]["prop_id"] == "speaker_selector.value":
+        transcript = transcript[transcript.speaker.isin(selected_speakers)]
+        table = dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
+        return table, dash.no_update, dash.no_update
+
+    return dash.no_update, dash.no_update, dash.no_update
 
 @app.callback(
-    Output(component_id="keywords_table", component_property="columns"),
-    Output(component_id="keywords_table", component_property="data"),
-    Input(component_id="keyword_extraction_method_selector", component_property="value"),
-    Input(component_id="transcript_table", component_property="data"),
+    Output(component_id="keyword_table", component_property="children"),
+    Input(component_id="transcript_selector", component_property="value"),
+    Input(component_id="keyword_extraction_apply_button", component_property="n_clicks"),
+    State(component_id="keyword_extraction_method_selector", component_property="value"),
 )
-def extract_keywords(selected_methods, transcript_table):
+def extract_keywords(selected_transcript, n_clicks, selected_methods):
+    transcript = pd.read_csv("./transcripts/" + selected_transcript)
 
-    transcript = pd.DataFrame.from_records(transcript_table)
-    
     if "textrank" in selected_methods:
         textrank_keywords = [None] * len(transcript)
         for i in range(len(transcript)):
@@ -145,18 +159,18 @@ def extract_keywords(selected_methods, transcript_table):
             except:
                 topicrank_keywords[i] = ""
         transcript["topicrank"] = topicrank_keywords
-    
-    transcript.drop(columns=["text"], inplace=True)
 
-    return [{"name": i, "id": i} for i in transcript.columns], transcript.to_dict("records")
+    transcript.drop(columns=["text"], inplace=True)
+    table = dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
+    return table
 
 @app.callback(
     Output(component_id="speakers_ratio", component_property="figure"),
-    Input(component_id="transcript_table", component_property="data")
+    Input(component_id="transcript_selector", component_property="value"),
 )
 def plot_speakers_ratio(selected_transcript):
 
-    transcript = pd.DataFrame.from_records(selected_transcript)
+    transcript = pd.read_csv("./transcripts/" + selected_transcript)
 
     transcript["word_count"] = 0
     for i in range(len(transcript)):
