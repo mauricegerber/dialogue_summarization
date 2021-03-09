@@ -7,7 +7,11 @@ from pytopicrank import TopicRank
 
 transcript = pd.read_csv("C:\\Users\\pasca\\myCloud\\01 Studium\\ZHAW\\Bachelor Wirtschaftsingenieurwesen\\6. Semester\\BA\\summarization\\Dash\\us_election_2020_vice_presidential_debate.csv")
 
+pd.set_option("display.max_rows", None, "display.max_columns", None)
 
-transcript_filtered = transcript[transcript.speaker.isin(transcript.speaker.unique()[:2])]
+nitial_transcript.timestamp[initial_transcript.index[-1]]]
 
-print(transcript_filtered.head(20))
+transcript["timestamp"] = pd.to_datetime(transcript.minute, format="%M:%S")
+
+print(transcript)
+
