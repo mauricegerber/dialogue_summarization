@@ -2,7 +2,7 @@ import pandas as pd
 import yake
 from yake import KeywordExtractor
 
-df = pd.read_csv("./Test_Text.csv", usecols = ["text"])
+df = pd.read_csv("./Test_Text.csv")
 df = df[:100]
 print(df)
 
