@@ -46,7 +46,7 @@ initial_timeline_max = initial_transcript.timestamp[initial_transcript.index[-1]
 
 #print(initial_timeline_max)
 #print(time.gmtime(initial_timeline_max / 1000.0))
-print(time.strftime("%H:%M", time.gmtime(initial_timeline_max)))
+#print(time.strftime("%H:%M", time.gmtime(initial_timeline_max)))
 
 app.layout = dbc.Container(
     [
