@@ -8,6 +8,7 @@ import tensorflow_hub as hub
 
 from tensorflow.keras import layers
 import bert
+import pandas as pd
 
 
 pd.read_csv("./Test_Text.csv")
