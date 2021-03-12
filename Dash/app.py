@@ -14,7 +14,7 @@ import dash_table
 import dash_bootstrap_components as dbc
 
 from summa import keywords
-from pytopicrank import TopicRank
+# from pytopicrank import TopicRank
 
 # Dash core components https://dash.plotly.com/dash-core-components
 # Bootstrap components https://dash-bootstrap-components.opensource.faculty.ai/docs/components
@@ -46,7 +46,7 @@ initial_timeline_max = initial_transcript.timestamp[initial_transcript.index[-1]
 
 #print(initial_timeline_max)
 #print(time.gmtime(initial_timeline_max / 1000.0))
-print(time.strftime("%H:%M", time.gmtime(initial_timeline_max)))
+#print(time.strftime("%H:%M", time.gmtime(initial_timeline_max)))
 
 app.layout = dbc.Container(
     [
@@ -232,14 +232,14 @@ def extract_keywords(selected_transcript, n_clicks, selected_methods):
                     textrank_keywords[i] = ""
             transcript["textrank"] = textrank_keywords
 
-        if "topicrank" in selected_methods:
-            topicrank_keywords = [None] * len(transcript)
-            for i in range(len(transcript)):
-                try:
-                    topicrank_keywords[i] = ", ".join(TopicRank(transcript.text[i]).get_top_n(3))
-                except:
-                    topicrank_keywords[i] = ""
-            transcript["topicrank"] = topicrank_keywords
+        # if "topicrank" in selected_methods:
+        #     topicrank_keywords = [None] * len(transcript)
+        #     for i in range(len(transcript)):
+        #         try:
+        #             topicrank_keywords[i] = ", ".join(TopicRank(transcript.text[i]).get_top_n(3))
+        #         except:
+        #             topicrank_keywords[i] = ""
+        #     transcript["topicrank"] = topicrank_keywords
 
     transcript.drop(columns=["text"], inplace=True)
     return dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
