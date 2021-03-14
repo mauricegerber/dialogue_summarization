@@ -53,11 +53,7 @@ app.layout = html.Div([
 
     dcc.Graph(id='my_bee_map', figure={}),
     html.Br(),
-    dcc.Input(
-            id="EINS",
-            type="text",
-            placeholder=" NONE ",
-        ),
+    dcc.Graph(id='bee_barplot', figure={}),
         
 ])
 
@@ -70,6 +66,7 @@ app.layout = html.Div([
     Output(component_id='output_container', component_property='children'),
     Output(component_id='output_container2', component_property='children'),
     Output(component_id='my_bee_map', component_property='figure'),
+    Output(component_id='bee_barplot', component_property='figure'),
     Input(component_id='slct_year', component_property='value'),
     Input(component_id='slct_disease', component_property='value'),
 )
@@ -98,6 +95,16 @@ def update_graph(option_slctd, disease_slctd):
         template='plotly_dark'
     )
 
+    dff.sort_values(by="Pct of Colonies Impacted", inplace =True, ascending = False)
+    fig2 = px.bar(
+        data_frame=dff,
+        x = "State",
+        y = "Pct of Colonies Impacted",
+        color_continuous_scale=px.colors.sequential.YlOrRd,
+        labels={'Pct of Colonies Impacted': '% of Bee Colonies'},
+        template='plotly_dark'
+    )
+
     # Plotly Graph Objects (GO)
     # fig = go.Figure(
     #     data=[go.Choropleth(
@@ -116,7 +123,7 @@ def update_graph(option_slctd, disease_slctd):
     #     geo=dict(scope='usa'),
     # )
 
-    return container, container2, fig
+    return container, container2, fig, fig2
 
 
 # ------------------------------------------------------------------------------
