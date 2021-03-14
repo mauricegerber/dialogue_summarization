@@ -1,7 +1,3 @@
-body {
-    overflow-y: scroll;
-}
-
 .app-header {
     height: 60px;
     line-height: 60px;
@@ -34,7 +30,7 @@ body {
     border-radius: 0;
     border-color: #adb5bd;
 }
-#timeline_slider > div > div.rc-slider-step
+
 #timeline_slider > div > div.rc-slider-handle:active {
     box-shadow: 0 0 5px #adb5bd;
 }

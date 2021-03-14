@@ -1,8 +1,8 @@
 import os
 import pandas as pd
-from time import mktime as mktime
-import time
 from datetime import datetime
+import time
+
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -23,36 +23,35 @@ BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/lux/bootstrap.min.css"
 app = dash.Dash(external_stylesheets=[BS])
 
 def calculate_timestamps(transcript):
+    first_timestamp = datetime.strptime("0:00", "%M:%S")
     timestamps = []
-    initial_timestamp = datetime.strptime(transcript.minute[0], "%M:%S").replace(year=2000)
-    for time in transcript.minute:
-        if len(time) == 5:
-            timestamp = datetime.strptime(time, "%M:%S").replace(year=2000)
-            timestamps.append(mktime(timestamp.timetuple())-mktime(initial_timestamp.timetuple()))
-        elif len(time) == 8 and time[5:] == ":00":
-            timestamp = datetime.strptime(time[:5], "%M:%S").replace(year=2000)
-            timestamps.append(mktime(timestamp.timetuple())-mktime(initial_timestamp.timetuple()))
-        elif len(time) == 8:
-            timestamp = datetime.strptime(time, "%H:%M:%S").replace(year=2000)
-            timestamps.append(mktime(timestamp.timetuple())-mktime(initial_timestamp.timetuple()))
-    transcript["timestamp"] = timestamps
+    for t in transcript["Time"]:
+        if len(t) <= 5:
+            current_timestamp = datetime.strptime(t, "%M:%S")
+            timestamps.append((current_timestamp - first_timestamp).total_seconds())
+        else:
+            current_timestamp = datetime.strptime(t, "%H:%M:%S")
+            timestamps.append((current_timestamp - first_timestamp).total_seconds())
+    transcript["Timestamp"] = timestamps
 
-transcripts = os.listdir("./transcripts")
+transcripts_dir = "./transcripts/"
+transcripts = os.listdir(transcripts_dir)
 initial_transcript_index = 0
-initial_transcript = pd.read_csv("./transcripts/" + transcripts[initial_transcript_index])
-calculate_timestamps(initial_transcript)
-initial_timeline_min = initial_transcript.timestamp[0]
-initial_timeline_max = initial_transcript.timestamp[initial_transcript.index[-1]]
+initial_transcript = pd.read_csv(
+    filepath_or_buffer=transcripts_dir + transcripts[initial_transcript_index],
+    header=0,
+    names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+    usecols=["Speaker", "Time", "Utterance"],
+)
+initial_transcript["Time"] = initial_transcript["Time"].str.replace("60", "59")
 
-#print(initial_timeline_max)
-#print(time.gmtime(initial_timeline_max / 1000.0))
-#print(time.strftime("%H:%M", time.gmtime(initial_timeline_max)))
+calculate_timestamps(initial_transcript)
+initial_timeline_min = initial_transcript["Timestamp"][0]
+initial_timeline_max = initial_transcript["Timestamp"][initial_transcript.index[-1]]
 
 app.layout = dbc.Container(
     [
-        html.Br(),
-        html.H1("Dialog Summarization", style={"text-align": "center"}),
-        html.Br(),
+        html.H1("Dialog Summarization"),
         dbc.Row(
             [
                 dbc.Col(
@@ -67,21 +66,10 @@ app.layout = dbc.Container(
                 ),
                 dbc.Col(
                     [
-                        dbc.Checklist(
-                            id="keyword_extraction_method_selector",
-                            options=[
-                                {"label": "Word frequency", "value": "word_frequency"},
-                                {"label": "TF-IDF", "value": "tf_idf"},
-                                {"label": "TextRank", "value": "textrank"},
-                                {"label": "TopicRank", "value": "topicrank"},
-                                {"label": "YAKE!", "value": "yake"},
-                                {"label": "BERT", "value": "bert"},
-                            ],
-                            value=[],
-                            switch=True,
+                        dcc.Upload(
+                            id="transcript_upload",
+                            children=html.Div(["Drag and Drop or ", html.A("select Files")]),
                         ),
-                        html.Br(),
-                        dbc.Button("Apply", id="keyword_extraction_apply_button", color="primary"),
                     ],
                     width=3,
                 ),
@@ -104,9 +92,9 @@ app.layout = dbc.Container(
                                                     dbc.Checklist(
                                                         id="speaker_selector",
                                                         options=[{"label": i, "value": i}
-                                                                for i in sorted(initial_transcript.speaker.unique(),
+                                                                for i in sorted(initial_transcript["Speaker"].unique(),
                                                                                 key=str.lower)],
-                                                        value=initial_transcript.speaker.unique(),
+                                                        value=initial_transcript["Speaker"].unique(),
                                                     ),
                                                 ],
                                                 width=2,
@@ -120,7 +108,7 @@ app.layout = dbc.Container(
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
-                                                                        id="starttime",
+                                                                        id="start_time",
                                                                         type="time",
                                                                         value="00:00",
                                                                     ),
@@ -134,15 +122,17 @@ app.layout = dbc.Container(
                                                                         min=initial_timeline_min,
                                                                         max=initial_timeline_max,
                                                                         value=[initial_timeline_min, initial_timeline_max],
+                                                                        updatemode="drag",
                                                                     ),
                                                                 ],
                                                             ),
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
-                                                                        id="endtime",
+                                                                        id="end_time",
                                                                         type="time",
-                                                                        value=time.strftime("%H:%M", time.gmtime(initial_timeline_max)),
+                                                                        value=time.strftime("%H:%M",
+                                                                                            time.gmtime(initial_timeline_max)),
                                                                     ),
                                                                 ],
                                                                 width="100px",
@@ -156,7 +146,11 @@ app.layout = dbc.Container(
                                     ),
                                     html.Br(),
                                     html.Div(id="transcript_table", children=[
-                                        dbc.Table.from_dataframe(initial_transcript, bordered=True, hover=True)
+                                        dbc.Table.from_dataframe(
+                                            initial_transcript[["Speaker", "Time", "Utterance"]],
+                                            bordered=True,
+                                            hover=True,
+                                        ),
                                     ],
                                     ),
                                 ],
@@ -187,62 +181,88 @@ app.layout = dbc.Container(
     Output(component_id="transcript_table", component_property="children"),
     Output(component_id="speaker_selector", component_property="options"),
     Output(component_id="speaker_selector", component_property="value"),
+    Output(component_id="start_time", component_property="value"),
+    Output(component_id="end_time", component_property="value"),
     Output(component_id="timeline_slider", component_property="min"),
     Output(component_id="timeline_slider", component_property="max"),
     Output(component_id="timeline_slider", component_property="value"),
     Input(component_id="transcript_selector", component_property="value"),
     Input(component_id="speaker_selector", component_property="value"),
+    Input(component_id="start_time", component_property="value"),
+    Input(component_id="end_time", component_property="value"),
+    Input(component_id="timeline_slider", component_property="value"),
 )
-def update_transcript_table_and_filters(selected_transcript, selected_speakers):
-    transcript = pd.read_csv("./transcripts/" + selected_transcript)
+def update_transcript_table_and_filters(selected_transcript, selected_speaker,
+                                        selected_start_time, selected_end_time, selected_timeline):
+    transcript = pd.read_csv(
+        filepath_or_buffer=transcripts_dir + selected_transcript,
+        header=0,
+        names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+        usecols=["Speaker", "Time", "Utterance"],
+    )
+    transcript["Time"] = transcript["Time"].str.replace("60", "59")
     calculate_timestamps(transcript)
-
+    
     if dash.callback_context.triggered[0]["prop_id"] == "transcript_selector.value":
-        speakers = transcript.speaker.unique()
-        transcript_table = dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
-        timeline_min, timeline_max = transcript.timestamp[0], transcript.timestamp[transcript.index[-1]]
+        transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
+        speakers = transcript["Speaker"].unique()
+        timeline_min = transcript["Timestamp"][0]
+        timeline_max = transcript["Timestamp"][transcript.index[-1]]
 
         return (transcript_table, [{"label": i, "value": i} for i in sorted(speakers, key=str.lower)], speakers,
+                "00:00", time.strftime("%H:%M", time.gmtime(timeline_max)),
                 timeline_min, timeline_max, [timeline_min, timeline_max])
+    
+    if dash.callback_context.triggered[0]["prop_id"] != "transcript_selector.value":
+        transcript = transcript[transcript["Speaker"].isin(selected_speaker)]
+        transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
 
-    if dash.callback_context.triggered[0]["prop_id"] == "speaker_selector.value":
-        transcript = transcript[transcript.speaker.isin(selected_speakers)]
-        transcript_table = dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
-        return transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        first_timestamp = datetime.strptime("0:00", "%M:%S")
 
-    return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        current_start_time = datetime.strptime(selected_start_time, "%H:%M")
+        current_end_time = datetime.strptime(selected_end_time, "%H:%M")
 
-@app.callback(
-    Output(component_id="keyword_table", component_property="children"),
-    Input(component_id="transcript_selector", component_property="value"),
-    Input(component_id="keyword_extraction_apply_button", component_property="n_clicks"),
-    State(component_id="keyword_extraction_method_selector", component_property="value"),
-)
-def extract_keywords(selected_transcript, n_clicks, selected_methods):
-    transcript = pd.read_csv("./transcripts/" + selected_transcript)
+        values = [(current_start_time - first_timestamp).total_seconds(), (current_end_time - first_timestamp).total_seconds()]
+        print(values)
 
-    if dash.callback_context.triggered[0]["prop_id"] == "keyword_extraction_apply_button.n_clicks":
+        return (transcript_table, dash.no_update, dash.no_update,
+                time.strftime("%H:%M", time.gmtime(selected_timeline[0])), time.strftime("%H:%M", time.gmtime(selected_timeline[1])),
+                dash.no_update, dash.no_update, dash.no_update)
 
-        if "textrank" in selected_methods:
-            textrank_keywords = [None] * len(transcript)
-            for i in range(len(transcript)):
-                try:
-                    textrank_keywords[i] = keywords.keywords(transcript.text[i], words=3).replace("\n", ", ")
-                except:
-                    textrank_keywords[i] = ""
-            transcript["textrank"] = textrank_keywords
+    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+    dash.no_update, dash.no_update, dash.no_update, dash.no_update)
 
-        # if "topicrank" in selected_methods:
-        #     topicrank_keywords = [None] * len(transcript)
-        #     for i in range(len(transcript)):
-        #         try:
-        #             topicrank_keywords[i] = ", ".join(TopicRank(transcript.text[i]).get_top_n(3))
-        #         except:
-        #             topicrank_keywords[i] = ""
-        #     transcript["topicrank"] = topicrank_keywords
+# @app.callback(
+#     Output(component_id="keyword_table", component_property="children"),
+#     Input(component_id="transcript_selector", component_property="value"),
+#     Input(component_id="keyword_extraction_apply_button", component_property="n_clicks"),
+#     State(component_id="keyword_extraction_method_selector", component_property="value"),
+# )
+# def extract_keywords(selected_transcript, n_clicks, selected_methods):
+#     transcript = pd.read_csv("./transcripts/" + selected_transcript)
 
-    transcript.drop(columns=["text"], inplace=True)
-    return dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
+#     if dash.callback_context.triggered[0]["prop_id"] == "keyword_extraction_apply_button.n_clicks":
+
+#         if "textrank" in selected_methods:
+#             textrank_keywords = [None] * len(transcript)
+#             for i in range(len(transcript)):
+#                 try:
+#                     textrank_keywords[i] = keywords.keywords(transcript.text[i], words=3).replace("\n", ", ")
+#                 except:
+#                     textrank_keywords[i] = ""
+#             transcript["textrank"] = textrank_keywords
+
+#         # if "topicrank" in selected_methods:
+#         #     topicrank_keywords = [None] * len(transcript)
+#         #     for i in range(len(transcript)):
+#         #         try:
+#         #             topicrank_keywords[i] = ", ".join(TopicRank(transcript.text[i]).get_top_n(3))
+#         #         except:
+#         #             topicrank_keywords[i] = ""
+#         #     transcript["topicrank"] = topicrank_keywords
+
+#     transcript.drop(columns=["text"], inplace=True)
+#     return dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
 
 # @app.callback(
 #     Output(component_id="speakers_ratio", component_property="figure"),
