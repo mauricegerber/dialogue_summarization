@@ -39,3 +39,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     background: none;
     display: none;
 }
+
+#transcript_table > table > tbody > tr:nth-child(1) > td:nth-child(1) {
+    white-space: nowrap;
+}

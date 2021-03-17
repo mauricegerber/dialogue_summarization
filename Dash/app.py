@@ -51,7 +51,9 @@ initial_timeline_max = initial_transcript["Timestamp"][initial_transcript.index[
 
 app.layout = dbc.Container(
     [
+        html.Br(),
         html.H1("Dialog Summarization"),
+        html.Br(),
         dbc.Row(
             [
                 dbc.Col(
@@ -108,7 +110,7 @@ app.layout = dbc.Container(
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
-                                                                        id="start_time",
+                                                                        id="start_time_input",
                                                                         type="time",
                                                                         value="00:00",
                                                                     ),
@@ -122,13 +124,15 @@ app.layout = dbc.Container(
                                                                         min=initial_timeline_min,
                                                                         max=initial_timeline_max,
                                                                         value=[initial_timeline_min, initial_timeline_max],
+                                                                        updatemode="drag",
                                                                     ),
                                                                 ],
+                                                                width=9,
                                                             ),
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
-                                                                        id="end_time",
+                                                                        id="end_time_input",
                                                                         type="time",
                                                                         value=time.strftime("%H:%M",
                                                                                             time.gmtime(initial_timeline_max)),
@@ -139,7 +143,19 @@ app.layout = dbc.Container(
                                                         ],
                                                     ),  
                                                 ],
-                                                width=6,
+                                                width=8,
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    html.Br(),
+                                                    html.H5("Search:"),
+                                                    dbc.Input(
+                                                        id="search_input",
+                                                        type="search",
+                                                        placeholder="Input goes here...",
+                                                    ),
+                                                ],
+                                                width=2,
                                             ),
                                         ],
                                     ),
@@ -180,19 +196,21 @@ app.layout = dbc.Container(
     Output(component_id="transcript_table", component_property="children"),
     Output(component_id="speaker_selector", component_property="options"),
     Output(component_id="speaker_selector", component_property="value"),
-    Output(component_id="start_time", component_property="value"),
-    Output(component_id="end_time", component_property="value"),
+    Output(component_id="start_time_input", component_property="value"),
+    Output(component_id="end_time_input", component_property="value"),
     Output(component_id="timeline_slider", component_property="min"),
     Output(component_id="timeline_slider", component_property="max"),
     Output(component_id="timeline_slider", component_property="value"),
+    Output(component_id="search_input", component_property="value"),
     Input(component_id="transcript_selector", component_property="value"),
     Input(component_id="speaker_selector", component_property="value"),
-    Input(component_id="start_time", component_property="value"),
-    Input(component_id="end_time", component_property="value"),
+    Input(component_id="start_time_input", component_property="value"),
+    Input(component_id="end_time_input", component_property="value"),
     Input(component_id="timeline_slider", component_property="value"),
+    Input(component_id="search_input", component_property="value"),
 )
 def update_transcript_table_and_filters(selected_transcript, selected_speaker, selected_start_time,
-                                        selected_end_time, selected_timeline):
+                                        selected_end_time, selected_timeline, search_term):
     transcript = pd.read_csv(
         filepath_or_buffer=transcripts_dir + selected_transcript,
         header=0,
@@ -214,10 +232,12 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
         
         return (transcript_table, [{"label": i, "value": i} for i in sorted(speakers, key=str.lower)], speakers,
                 "00:00", time.strftime("%H:%M", time.gmtime(timeline_max)),
-                timeline_min, timeline_max, [timeline_min, timeline_max])
+                timeline_min, timeline_max, [timeline_min, timeline_max], None)
     
     if trigger != "." and trigger != "transcript_selector.value":
         transcript = transcript[transcript["Speaker"].isin(selected_speaker)]
+        if search_term is not None:
+            transcript = transcript[transcript["Utterance"].str.contains(search_term, case=False)]
 
         if trigger == "timeline_slider.value":
             transcript = transcript[transcript["Timestamp"] >= selected_timeline[0]]
@@ -227,7 +247,7 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
             return (transcript_table, dash.no_update, dash.no_update,
                     time.strftime("%H:%M", time.gmtime(selected_timeline[0])),
                     time.strftime("%H:%M", time.gmtime(selected_timeline[1])),
-                    dash.no_update, dash.no_update, dash.no_update)
+                    dash.no_update, dash.no_update, dash.no_update, dash.no_update)
         
         first_timestamp = datetime.strptime("0:00", "%M:%S")
         current_start_time = datetime.strptime(selected_start_time, "%H:%M")
@@ -240,10 +260,10 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
         transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
         
         return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                dash.no_update, dash.no_update, timeline_slider_values)
+                dash.no_update, dash.no_update, timeline_slider_values, dash.no_update)
     
     return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-            dash.no_update, dash.no_update)
+            dash.no_update, dash.no_update, dash.no_update)
 
 # @app.callback(
 #     Output(component_id="keyword_table", component_property="children"),
