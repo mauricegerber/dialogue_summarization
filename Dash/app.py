@@ -64,15 +64,15 @@ app.layout = dbc.Container(
                     ],
                     width=3,
                 ),
-                dbc.Col(
-                    [
-                        dcc.Upload(
-                            id="transcript_upload",
-                            children=html.Div(["Drag and Drop or ", html.A("select Files")]),
-                        ),
-                    ],
-                    width=3,
-                ),
+                # dbc.Col(
+                #     [
+                #         dcc.Upload(
+                #             id="transcript_upload",
+                #             children=html.Div(["Drag and Drop or ", html.A("select Files")]),
+                #         ),
+                #     ],
+                #     width=3,
+                # ),
             ],
         ),
         html.Br(),
@@ -122,7 +122,6 @@ app.layout = dbc.Container(
                                                                         min=initial_timeline_min,
                                                                         max=initial_timeline_max,
                                                                         value=[initial_timeline_min, initial_timeline_max],
-                                                                        updatemode="drag",
                                                                     ),
                                                                 ],
                                                             ),
@@ -192,8 +191,8 @@ app.layout = dbc.Container(
     Input(component_id="end_time", component_property="value"),
     Input(component_id="timeline_slider", component_property="value"),
 )
-def update_transcript_table_and_filters(selected_transcript, selected_speaker,
-                                        selected_start_time, selected_end_time, selected_timeline):
+def update_transcript_table_and_filters(selected_transcript, selected_speaker, selected_start_time,
+                                        selected_end_time, selected_timeline):
     transcript = pd.read_csv(
         filepath_or_buffer=transcripts_dir + selected_transcript,
         header=0,
@@ -201,36 +200,50 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker,
         usecols=["Speaker", "Time", "Utterance"],
     )
     transcript["Time"] = transcript["Time"].str.replace("60", "59")
+
     calculate_timestamps(transcript)
+    timeline_min = transcript["Timestamp"][0]
+    timeline_max = transcript["Timestamp"][transcript.index[-1]]
+    timeline_deviation = timeline_max - int(timeline_max/60)*60
+
+    trigger = dash.callback_context.triggered[0]["prop_id"]
     
-    if dash.callback_context.triggered[0]["prop_id"] == "transcript_selector.value":
+    if trigger == "transcript_selector.value":
         transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
         speakers = transcript["Speaker"].unique()
-        timeline_min = transcript["Timestamp"][0]
-        timeline_max = transcript["Timestamp"][transcript.index[-1]]
-
+        
         return (transcript_table, [{"label": i, "value": i} for i in sorted(speakers, key=str.lower)], speakers,
                 "00:00", time.strftime("%H:%M", time.gmtime(timeline_max)),
                 timeline_min, timeline_max, [timeline_min, timeline_max])
     
-    if dash.callback_context.triggered[0]["prop_id"] != "transcript_selector.value":
+    if trigger != "." and trigger != "transcript_selector.value":
         transcript = transcript[transcript["Speaker"].isin(selected_speaker)]
-        transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
 
+        if trigger == "timeline_slider.value":
+            transcript = transcript[transcript["Timestamp"] >= selected_timeline[0]]
+            transcript = transcript[transcript["Timestamp"] <= selected_timeline[1]]
+            transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
+
+            return (transcript_table, dash.no_update, dash.no_update,
+                    time.strftime("%H:%M", time.gmtime(selected_timeline[0])),
+                    time.strftime("%H:%M", time.gmtime(selected_timeline[1])),
+                    dash.no_update, dash.no_update, dash.no_update)
+        
         first_timestamp = datetime.strptime("0:00", "%M:%S")
-
         current_start_time = datetime.strptime(selected_start_time, "%H:%M")
         current_end_time = datetime.strptime(selected_end_time, "%H:%M")
+        timeline_slider_values = [(current_start_time - first_timestamp).total_seconds(),
+                                  (current_end_time - first_timestamp).total_seconds() + timeline_deviation]
 
-        values = [(current_start_time - first_timestamp).total_seconds(), (current_end_time - first_timestamp).total_seconds()]
-        print(values)
-
-        return (transcript_table, dash.no_update, dash.no_update,
-                time.strftime("%H:%M", time.gmtime(selected_timeline[0])), time.strftime("%H:%M", time.gmtime(selected_timeline[1])),
-                dash.no_update, dash.no_update, dash.no_update)
-
-    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-    dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+        transcript = transcript[transcript["Timestamp"] >= timeline_slider_values[0]]
+        transcript = transcript[transcript["Timestamp"] <= timeline_slider_values[1]]
+        transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
+        
+        return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+                dash.no_update, dash.no_update, timeline_slider_values)
+    
+    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+            dash.no_update, dash.no_update)
 
 # @app.callback(
 #     Output(component_id="keyword_table", component_property="children"),
