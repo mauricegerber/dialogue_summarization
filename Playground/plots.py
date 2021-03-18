@@ -7,7 +7,7 @@ from nltk.tokenize import word_tokenize
 from wordcloud import WordCloud
 
 transcript = pd.read_csv(
-        filepath_or_buffer="Playground\Job interview.csv",
+        filepath_or_buffer="Playground\Vice presidential debate.csv",
         header=0,
         names=["Speaker", "Time", "End time", "Duration", "Utterance"],
         usecols=["Speaker", "Time", "Utterance"],
@@ -39,7 +39,7 @@ for w in words:
 print(filtered_words[:100])
 print()
 
-w1 = wordnet.synset("war.n.01")
+w1 = wordnet.synset("corona.n.01")
 values = []
 for w in filtered_words:
     try:

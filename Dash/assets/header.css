@@ -43,3 +43,20 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 #transcript_table > table > tbody > tr:nth-child(1) > td:nth-child(1) {
     white-space: nowrap;
 }
+
+#transcript_table123 > div.dash-spreadsheet-container > div > div.dt-table-container__row.dt-table-container__row-1 > div.cell.cell-1-1.dash-fixed-content > table > tbody > tr > td.dash-cell.column-0 > div > p,
+#transcript_table123 > div.dash-spreadsheet-container > div > div.dt-table-container__row.dt-table-container__row-1 > div.cell.cell-1-1.dash-fixed-content > table > tbody > tr > td.dash-cell.column-1 > div > p,
+#transcript_table123 > div.dash-spreadsheet-container > div > div.dt-table-container__row.dt-table-container__row-1 > div.cell.cell-1-1.dash-fixed-content > table > tbody > tr > td.dash-cell.column-2 > div > p {
+    margin-bottom: 0;
+}
+
+#transcript_table123 > div.dash-spreadsheet-container > div > div.dt-table-container__row.dt-table-container__row-1 {
+    overflow-y: scroll;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#transcript_table123 > div.dash-spreadsheet-container > div > div.dt-table-container__row.dt-table-container__row-1::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
