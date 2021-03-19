@@ -3,22 +3,19 @@ import pandas as pd
 from datetime import datetime
 import time
 
-import plotly.express as px
-import plotly.graph_objects as go
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import dash_table
-import dash_bootstrap_components as dbc
+
+import plotly.express as px
+import plotly.graph_objects as go
 
 from summa import keywords
 # from pytopicrank import TopicRank
 
-# Dash core components https://dash.plotly.com/dash-core-components
-# Bootstrap components https://dash-bootstrap-components.opensource.faculty.ai/docs/components
-# Bootstrap themes https://www.bootstrapcdn.com/bootswatch
 BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/lux/bootstrap.min.css"
 app = dash.Dash(external_stylesheets=[BS])
 
@@ -28,10 +25,10 @@ def calculate_timestamps(transcript):
     for t in transcript["Time"]:
         if len(t) <= 5:
             current_timestamp = datetime.strptime(t, "%M:%S")
-            timestamps.append((current_timestamp - first_timestamp).total_seconds())
+            timestamps.append(int((current_timestamp - first_timestamp).total_seconds()))
         else:
             current_timestamp = datetime.strptime(t, "%H:%M:%S")
-            timestamps.append((current_timestamp - first_timestamp).total_seconds())
+            timestamps.append(int((current_timestamp - first_timestamp).total_seconds()))
     transcript["Timestamp"] = timestamps
 
 transcripts_dir = "./transcripts/"
@@ -66,15 +63,6 @@ app.layout = dbc.Container(
                     ],
                     width=3,
                 ),
-                # dbc.Col(
-                #     [
-                #         dcc.Upload(
-                #             id="transcript_upload",
-                #             children=html.Div(["Drag and Drop or ", html.A("select Files")]),
-                #         ),
-                #     ],
-                #     width=3,
-                # ),
             ],
         ),
         html.Br(),
@@ -90,12 +78,12 @@ app.layout = dbc.Container(
                                             dbc.Col(
                                                 [
                                                     html.Br(),
-                                                    html.H5("Select speaker:"),
+                                                    html.H5("Select speaker"),
                                                     dbc.Checklist(
                                                         id="speaker_selector",
                                                         options=[{"label": i, "value": i}
-                                                                for i in sorted(initial_transcript["Speaker"].unique(),
-                                                                                key=str.lower)],
+                                                                 for i in sorted(initial_transcript["Speaker"].unique(),
+                                                                 key=str.lower)],
                                                         value=initial_transcript["Speaker"].unique(),
                                                     ),
                                                 ],
@@ -104,7 +92,7 @@ app.layout = dbc.Container(
                                             dbc.Col(
                                                 [
                                                     html.Br(),
-                                                    html.H5("Select time:"),
+                                                    html.H5("Select time"),
                                                     dbc.Row(
                                                         [
                                                             dbc.Col(
@@ -124,14 +112,7 @@ app.layout = dbc.Container(
                                                                         min=initial_timeline_min,
                                                                         max=initial_timeline_max,
                                                                         value=[initial_timeline_min, initial_timeline_max],
-                                                                        updatemode="drag",
-                                                                        marks={
-                                                                            0: '0',
-                                                                            100: '3',
-                                                                            200: '|',
-                                                                            300: '|',
-                                                                            400: '|'
-                                                                        },
+                                                                        marks={},
                                                                     ),
                                                                 ],
                                                                 width=9,
@@ -155,11 +136,11 @@ app.layout = dbc.Container(
                                             dbc.Col(
                                                 [
                                                     html.Br(),
-                                                    html.H5("Search:"),
+                                                    html.H5("Search"),
                                                     dbc.Input(
                                                         id="search_input",
                                                         type="search",
-                                                        placeholder="Input goes here...",
+                                                        placeholder="Enter search term here",
                                                     ),
                                                 ],
                                                 width=2,
@@ -168,13 +149,18 @@ app.layout = dbc.Container(
                                     ),
                                     html.Br(),
                                     dash_table.DataTable(
-                                        id="transcript_table123",
+                                        id="transcript_table",
                                         columns=[
                                             {"name": "Speaker", "id": "Speaker", "presentation": "markdown"},
                                             {"name": "Time", "id": "Time", "presentation": "markdown"},
                                             {"name": "Utterance", "id": "Utterance", "presentation": "markdown"}
                                         ],
                                         data=initial_transcript[["Speaker", "Time", "Utterance"]].to_dict("records"),
+                                        style_data_conditional=[
+                                            {"if": {"state": "selected"},
+                                             "background-color": "white",
+                                             "border": "1px solid rgba(0,0,0,0.05)"},
+                                        ],
                                         style_header={
                                             "font-size": "0.9rem",
                                             "background-color": "#f7f7f9",
@@ -196,27 +182,12 @@ app.layout = dbc.Container(
                                         fixed_rows={"headers": True},
                                         page_action="none",
                                     ),
-                                    html.Br(),
                                 ],
                                 ),
                                 dbc.Tab(label="Keywords", children=[
-                                    html.Br(),
-                                    html.Div(id="transcript_table", children=[
-                                        dbc.Table.from_dataframe(
-                                            initial_transcript[["Speaker", "Time", "Utterance"]],
-                                            bordered=True,
-                                            hover=True,
-                                        ),
-                                    ],
-                                    ),
-                                    # html.Div(id="keyword_table", children=[
-                                    #     dbc.Table.from_dataframe(initial_transcript, bordered=True, hover=True)
-                                    # ],
-                                    # ),
                                 ],
                                 ),
                                 dbc.Tab(label="Plots", children=[
-                                    #dcc.Graph(id="speakers_ratio", figure={}),
                                 ],
                                 ),
                             ],
@@ -230,7 +201,7 @@ app.layout = dbc.Container(
 )
 
 @app.callback(
-    Output(component_id="transcript_table", component_property="children"),
+    Output(component_id="transcript_table", component_property="data"),
     Output(component_id="speaker_selector", component_property="options"),
     Output(component_id="speaker_selector", component_property="value"),
     Output(component_id="start_time_input", component_property="value"),
@@ -238,8 +209,8 @@ app.layout = dbc.Container(
     Output(component_id="timeline_slider", component_property="min"),
     Output(component_id="timeline_slider", component_property="max"),
     Output(component_id="timeline_slider", component_property="value"),
+    Output(component_id="timeline_slider", component_property="marks"),
     Output(component_id="search_input", component_property="value"),
-    Output(component_id="transcript_table123", component_property="data"),
     Input(component_id="transcript_selector", component_property="value"),
     Input(component_id="speaker_selector", component_property="value"),
     Input(component_id="start_time_input", component_property="value"),
@@ -263,56 +234,52 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
     timeline_deviation = timeline_max - int(timeline_max/60)*60
 
     trigger = dash.callback_context.triggered[0]["prop_id"]
-    
-    if trigger == "transcript_selector.value":
-        transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
-        speakers = transcript["Speaker"].unique()
 
-        transcript_table123 = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
+    if trigger == "transcript_selector.value":
+        speakers = transcript["Speaker"].unique()
+        transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
         
         return (transcript_table, [{"label": i, "value": i} for i in sorted(speakers, key=str.lower)], speakers,
                 "00:00", time.strftime("%H:%M", time.gmtime(timeline_max)),
-                timeline_min, timeline_max, [timeline_min, timeline_max], None, transcript_table123)
+                timeline_min, timeline_max, [timeline_min, timeline_max], dict(), None)
     
     if trigger != "." and trigger != "transcript_selector.value":
+        marks = dict()
         transcript = transcript[transcript["Speaker"].isin(selected_speaker)]
-        if search_term != None and search_term != "" and len(search_term) > 1:
-            transcript = transcript[transcript["Utterance"].str.contains(search_term, case=False)]
-            print(transcript["Timestamp"])
+        
+        if search_term != None and len(search_term) > 1:
+            transcript = transcript[transcript["Utterance"].str.contains(search_term, case=False, regex=False)]
             if search_term[-1] == " ":
                 transcript["Utterance"] = transcript["Utterance"].str.replace(search_term[:-1], "**" + search_term[:-1] + "**", case=False)
             else:
                 transcript["Utterance"] = transcript["Utterance"].str.replace(search_term, "**" + search_term + "**", case=False)
+            mark_symbol = ["|"] * len(transcript)
+            marks = dict(zip(transcript["Timestamp"], mark_symbol))
 
-        if trigger == "timeline_slider.value":
-            transcript = transcript[transcript["Timestamp"] >= selected_timeline[0]]
-            transcript = transcript[transcript["Timestamp"] <= selected_timeline[1]]
-            transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
+        if trigger == "start_time_input.value" or trigger == "end_time_input.value":
+            first_timestamp = datetime.strptime("0:00", "%M:%S")
+            current_start_time = datetime.strptime(selected_start_time, "%H:%M")
+            current_end_time = datetime.strptime(selected_end_time, "%H:%M")
+            timeline_slider_values = [(current_start_time - first_timestamp).total_seconds(),
+                                      (current_end_time - first_timestamp).total_seconds() + timeline_deviation]
+            transcript = transcript[transcript["Timestamp"] >= timeline_slider_values[0]]
+            transcript = transcript[transcript["Timestamp"] <= timeline_slider_values[1]]
+            transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
+            
+            return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+                    dash.no_update, dash.no_update, timeline_slider_values, marks, dash.no_update)
 
-            transcript_table123 = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
+        transcript = transcript[transcript["Timestamp"] >= selected_timeline[0]]
+        transcript = transcript[transcript["Timestamp"] <= selected_timeline[1]]
+        transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
 
-            return (transcript_table, dash.no_update, dash.no_update,
-                    time.strftime("%H:%M", time.gmtime(selected_timeline[0])),
-                    time.strftime("%H:%M", time.gmtime(selected_timeline[1])),
-                    dash.no_update, dash.no_update, dash.no_update, dash.no_update, transcript_table123)
-        
-        first_timestamp = datetime.strptime("0:00", "%M:%S")
-        current_start_time = datetime.strptime(selected_start_time, "%H:%M")
-        current_end_time = datetime.strptime(selected_end_time, "%H:%M")
-        timeline_slider_values = [(current_start_time - first_timestamp).total_seconds(),
-                                  (current_end_time - first_timestamp).total_seconds() + timeline_deviation]
+        return (transcript_table, dash.no_update, dash.no_update,
+                time.strftime("%H:%M", time.gmtime(selected_timeline[0])),
+                time.strftime("%H:%M", time.gmtime(selected_timeline[1])),
+                dash.no_update, dash.no_update, dash.no_update, marks, dash.no_update)
 
-        transcript = transcript[transcript["Timestamp"] >= timeline_slider_values[0]]
-        transcript = transcript[transcript["Timestamp"] <= timeline_slider_values[1]]
-        transcript_table = dbc.Table.from_dataframe(transcript[["Speaker", "Time", "Utterance"]], bordered=True, hover=True)
-
-        transcript_table123 = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
-        
-        return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                dash.no_update, dash.no_update, timeline_slider_values, dash.no_update, transcript_table123)
-    
-    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-            dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+            dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
 
 # @app.callback(
 #     Output(component_id="keyword_table", component_property="children"),
