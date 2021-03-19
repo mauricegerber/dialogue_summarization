@@ -33,7 +33,7 @@ def calculate_timestamps(transcript):
 
 transcripts_dir = "./transcripts/"
 transcripts = os.listdir(transcripts_dir)
-initial_transcript_index = 0
+initial_transcript_index = 1
 initial_transcript = pd.read_csv(
     filepath_or_buffer=transcripts_dir + transcripts[initial_transcript_index],
     header=0,
@@ -72,7 +72,7 @@ app.layout = dbc.Container(
                     [
                         dbc.Tabs(
                             [
-                                dbc.Tab(label="Transcript", children=[
+                                dbc.Tab(label="Transcript", id="transcript_tab", children=[
                                     dbc.Row(
                                         [
                                             dbc.Col(
@@ -184,10 +184,8 @@ app.layout = dbc.Container(
                                     ),
                                 ],
                                 ),
-                                dbc.Tab(label="Keywords", children=[
-                                ],
-                                ),
-                                dbc.Tab(label="Plots", children=[
+                                dbc.Tab(label="Keywords", id="keywords_tab", children=[
+                                    dcc.Graph(id="keywords_plot", figure={}),
                                 ],
                                 ),
                             ],
@@ -280,6 +278,43 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
 
     return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
             dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+
+@app.callback(
+    Output(component_id="keywords_plot", component_property="figure"),
+    Input(component_id="transcript_selector", component_property="value"),
+)
+def create_keywords_plot(selected_transcript):
+    transcript = pd.read_csv(
+        filepath_or_buffer=transcripts_dir + selected_transcript,
+        header=0,
+        names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+        usecols=["Speaker", "Time", "Utterance"],
+    )
+    transcript["Time"] = transcript["Time"].str.replace("60", "59")
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=[1, 2, 3],
+        y=[1, 4, 9],
+        mode="text",
+        name="Lines, Markers and Text",
+        text=["Text A", "Text B", "Text C"],
+        textposition="middle center"
+    ))
+
+    # x = [0, 1, 2, 3, 4]
+    # y = [0, 1, 4, 9, 16]
+    # w = ["one", "two", "three", "four", "five"]
+    # fig = px.scatter(x=x, y=y, text=w)
+    
+    return fig
+
+
+
+
+
+
 
 # @app.callback(
 #     Output(component_id="keyword_table", component_property="children"),
