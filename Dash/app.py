@@ -49,7 +49,7 @@ initial_timeline_max = initial_transcript["Timestamp"][initial_transcript.index[
 app.layout = dbc.Container(
     [
         html.Br(),
-        html.H1("Dialog Summarization"),
+        html.H1("Dialog analyzer"),
         html.Br(),
         dbc.Row(
             [
