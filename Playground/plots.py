@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import string
 import re
@@ -108,6 +109,135 @@ def _create_token_table(token_sequences, par_breaks):
 
     return token_table
 
+def _block_comparison(tokseqs, token_table):
+        """Implements the block comparison method"""
+        def blk_frq(tok, block):
+            # print("tok ", tok)
+            # print("block ", block)
+            # print(token_table[tok].ts_occurences)
+            ts_occs = filter(lambda o: o[0] in block, token_table[tok].ts_occurences) # checks if word occurs in the current block
+            freq = sum([tsocc[1] for tsocc in ts_occs]) # sum of occurences in the current block
+            # print("freq ", freq)
+            return freq
+
+        gap_scores = []
+        numgaps = len(tokseqs) - 1
+
+        # test values range(7, 8)
+        for curr_gap in range(numgaps):
+            score_dividend, score_divisor_b1, score_divisor_b2 = 0.0, 0.0, 0.0
+            score = 0.0
+            # adjust window size for boundary conditions
+            if curr_gap < k - 1:
+                window_size = curr_gap + 1
+            elif curr_gap > numgaps - k:
+                window_size = numgaps - curr_gap
+            else:
+                window_size = k
+
+            b1 = [ts.index for ts in tokseqs[curr_gap - window_size + 1 : curr_gap + 1]]
+            b2 = [ts.index for ts in tokseqs[curr_gap + 1 : curr_gap + window_size + 1]]
+            # windows are next to each other and max 10 elements long (parameter k)
+            # every gap is once calculated
+            # print(b1)
+
+            # counter = 0
+            for t in token_table:
+                # if counter > 20:
+                #     break
+                # counter += 1
+                score_dividend += blk_frq(t, b1) * blk_frq(t, b2) # words must at least occur once in each block to obtain values > 0
+                score_divisor_b1 += blk_frq(t, b1) ** 2
+                score_divisor_b2 += blk_frq(t, b2) ** 2
+
+            #print("score ", score_dividend)
+            #print("divisor b1 ", score_divisor_b1)
+            #print("divisor b2 ", score_divisor_b2)
+
+            try:
+                score = score_dividend / math.sqrt(score_divisor_b1 * score_divisor_b2)
+            except ZeroDivisionError:
+                pass  # score += 0.0
+
+            gap_scores.append(score)
+
+        return gap_scores
+
+def _smooth_scores(gap_scores):
+    "Wraps the smooth function from the SciPy Cookbook"
+    return list(
+        smooth(np.array(gap_scores[:]), window_len=smoothing_width + 1)
+    )
+
+# Pasted from the SciPy cookbook: http://www.scipy.org/Cookbook/SignalSmooth
+def smooth(x, window_len=11, window="flat"):
+    "smooth the data using a window with requested size."
+    if x.ndim != 1:
+        raise ValueError("smooth only accepts 1 dimension arrays.")
+
+    if x.size < window_len:
+        raise ValueError("Input vector needs to be bigger than window size.")
+
+    if window_len < 3:
+        return x
+
+    if window not in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
+        raise ValueError(
+            "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        )
+
+    s = np.r_[2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
+
+    # print(len(s))
+    if window == "flat":  # moving average
+        w = np.ones(window_len, "d")
+    else:
+        w = eval("np." + window + "(window_len)")
+
+    y = np.convolve(w / w.sum(), s, mode="same")
+
+    return y[window_len - 1 : -window_len + 1]
+
+def _depth_scores(scores):
+    """Calculates the depth of each gap, i.e. the average difference
+    between the left and right peaks and the gap's score"""
+
+    depth_scores = [0 for x in scores]
+    # clip boundaries: this holds on the rule of thumb(my thumb)
+    # that a section shouldn't be smaller than at least 2
+    # pseudosentences for small texts and around 5 for larger ones.
+
+    clip = min(max(len(scores) // 10, 2), 5)
+    index = clip
+
+    for gapscore in scores[clip:-clip]:
+        # print(scores[clip:-clip])
+        # print("gapscore ", gapscore)
+        lpeak = gapscore
+        for score in scores[index::-1]: # climbs up to the highest peak on the left starting from the current gapscore
+            #print("left ", scores[index::-1])
+            #print("score ", score)
+            if score >= lpeak:
+                #print(score, " >= ", lpeak)
+                lpeak = score
+                #print("new peak", lpeak)
+            else:
+                break
+        rpeak = gapscore
+        for score in scores[index:]: # climbs up to the highest peak on the right starting from the current gapscore
+            # print("right ", scores[index:])
+            # print("right ", score)
+            if score >= rpeak:
+                # print(score, " >= ", rpeak)
+                rpeak = score
+                # print("new peak", rpeak)
+            else:
+                break
+        depth_scores[index] = lpeak + rpeak - 2 * gapscore
+        index += 1
+    
+    return depth_scores
+
 class TokenSequence(object):
     "A token list with its original length and its index"
     def __init__(self, index, wrdindex_list, original_length=None):
@@ -116,10 +246,12 @@ class TokenSequence(object):
         del self.__dict__["self"] # delete self, otherwise self.self would be possible
 
 # a = TokenSequence(1, ["a", "b", "c"]) # optional original_length argument
+# b = [1, ["a", "b", "c"]]
+# print(b[0])
 # print(a.index)
 # print(a.wrdindex_list)
 # print(a.original_length)
-# # print(a.self)
+# print(a.self)
 
 class TokenTableField(object):
     """A field in the token table holding parameters for each token,
@@ -142,6 +274,8 @@ w = 20
 k = 10
 stopwords = stopwords.words("english")
 #print(stopwords)
+smoothing_width=2
+#smoothing_rounds=1,
 
 ### tokenize function
 
@@ -163,114 +297,50 @@ tokseqs = _divide_to_tokensequences(nopunct_text)
 for ts in tokseqs:
     ts.wrdindex_list = [wi for wi in ts.wrdindex_list if wi[0] not in stopwords]
 # for ts in tokseqs:
-#     print(ts.index, ts.wrdindex_list)
-
-#### Why are stopwords filtered after pseudosentences are created?
+#     print([ts.index, ts.wrdindex_list])
 
 token_table = _create_token_table(tokseqs, nopunct_par_breaks)
-"""
-word = "american"
-print(token_table[word].first_pos) # position of first occurence of word
-print(token_table[word].ts_occurences) # occurences in pseudosentences (token sequences)
-print(token_table[word].total_count) # total word count
-print(token_table[word].par_count) # total paragraph count (in how many paragraphs appeared it?)
-print(token_table[word].last_par) # last paragraph of appearance
-print(token_table[word].last_tok_seq) # last token sequence of appearance
-"""
+# word = "health"
+# print(token_table[word].first_pos) # position of first occurence of word
+# print(token_table[word].ts_occurences) # occurences in pseudosentences (token sequences)
+# print(token_table[word].total_count) # total word count
+# print(token_table[word].par_count) # total paragraph count (in how many paragraphs appeared it?)
+# print(token_table[word].last_par) # last paragraph of appearance
+# print(token_table[word].last_tok_seq) # last token sequence of appearance
 
-def blk_frq(tok, block):
-    #print("tok ", tok)
-    #print("block ", block)
-    #print(token_table[tok].ts_occurences)
-    ts_occs = filter(lambda o: o[0] in block, token_table[tok].ts_occurences) # checks if word occurs in the current block
-    # for test in ts_occs:
-    #     print("occ ", test)
-    # print("sum ", sum([tsocc[1] for tsocc in ts_occs]))
-    freq = sum([tsocc[1] for tsocc in ts_occs]) # sum of occurences in the current block
-    #print("freq ", freq)
-    return freq
 
-gap_scores = []
-numgaps = len(tokseqs) - 1
+## Lexical score determination
+gap_scores = _block_comparison(tokseqs, token_table)
+# print(gap_scores)
 
-# test values range(7, 8)
-for curr_gap in range(numgaps):
-    score_dividend, score_divisor_b1, score_divisor_b2 = 0.0, 0.0, 0.0
-    score = 0.0
-    # adjust window size for boundary conditions
-    if curr_gap < k - 1:
-        window_size = curr_gap + 1
-    elif curr_gap > numgaps - k:
-        window_size = numgaps - curr_gap
-    else:
-        window_size = k
+smooth_scores = _smooth_scores(gap_scores)
+# print(smooth_scores)
+# plt.plot(range(len(gap_scores)), gap_scores)
+# plt.plot(range(len(smooth_scores)), smooth_scores)
+# plt.show()
 
-    b1 = [ts.index for ts in tokseqs[curr_gap - window_size + 1 : curr_gap + 1]]
-    b2 = [ts.index for ts in tokseqs[curr_gap + 1 : curr_gap + window_size + 1]]
-    print(b2)
+## Boundary identification
+depth_scores = _depth_scores(smooth_scores)
 
-    #counter = 0
-    for t in token_table:
-        # if counter > 20:
-        #     break
-        score_dividend += blk_frq(t, b1) * blk_frq(t, b2) # words must at least occur once in each block to obtain values > 0
-        score_divisor_b1 += blk_frq(t, b1) ** 2
-        score_divisor_b2 += blk_frq(t, b2) ** 2
-        #counter += 1
+# test = [i for i in range(30)]
+# print(test) # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+# print(test[clip:-clip]) # [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+# print(test[index::-1]) # [5, 4, 3, 2, 1, 0]
 
-    #print("score ", score_dividend)
-    #print("divisor b1 ", score_divisor_b1)
-    #print("divisor b2 ", score_divisor_b2)
-
-    try:
-        score = score_dividend / math.sqrt(score_divisor_b1 * score_divisor_b2)
-    except ZeroDivisionError:
-        pass  # score += 0.0
-
-    gap_scores.append(score)
-
-#print(gap_scores)
+# print(depth_scores)
+plt.plot(range(len(depth_scores)), depth_scores)
+plt.show()
 
 
 
 
-def _block_comparison(self, tokseqs, token_table):
-        """Implements the block comparison method"""
 
-        def blk_frq(tok, block):
-            ts_occs = filter(lambda o: o[0] in block, token_table[tok].ts_occurences)
-            freq = sum([tsocc[1] for tsocc in ts_occs])
-            return freq
 
-        gap_scores = []
-        numgaps = len(tokseqs) - 1
 
-        for curr_gap in range(numgaps):
-            score_dividend, score_divisor_b1, score_divisor_b2 = 0.0, 0.0, 0.0
-            score = 0.0
-            # adjust window size for boundary conditions
-            if curr_gap < self.k - 1:
-                window_size = curr_gap + 1
-            elif curr_gap > numgaps - self.k:
-                window_size = numgaps - curr_gap
-            else:
-                window_size = self.k
 
-            b1 = [ts.index for ts in tokseqs[curr_gap - window_size + 1 : curr_gap + 1]]
-            b2 = [ts.index for ts in tokseqs[curr_gap + 1 : curr_gap + window_size + 1]]
 
-            for t in token_table:
-                score_dividend += blk_frq(t, b1) * blk_frq(t, b2) # words must at least occur once in each block to obtain values > 0
-                score_divisor_b1 += blk_frq(t, b1) ** 2
-                score_divisor_b2 += blk_frq(t, b2) ** 2
-            try:
-                score = score_dividend / math.sqrt(score_divisor_b1 * score_divisor_b2)
-            except ZeroDivisionError:
-                pass  # score += 0.0
 
-            gap_scores.append(score)
 
-        return gap_scores
 
 
 
@@ -294,6 +364,15 @@ def _block_comparison(self, tokseqs, token_table):
 # print(d)
 # print()
 # print(b)
+
+
+
+
+
+
+
+
+
 
 
 

@@ -62,13 +62,13 @@ DEFAULT_SMOOTHING = [0]
     """
 
     def __init__(
-        self,
-        w=20,
-        k=10,
-        similarity_method=BLOCK_COMPARISON,
-        stopwords=None,
-        smoothing_method=DEFAULT_SMOOTHING,
-        smoothing_width=2,
+        # self,
+        # w=20,
+        # k=10,
+        # similarity_method=BLOCK_COMPARISON,
+        # stopwords=None,
+        # smoothing_method=DEFAULT_SMOOTHING,
+        # smoothing_width=2,
         smoothing_rounds=1,
         cutoff_policy=HC,
         demo_mode=False,
@@ -81,9 +81,9 @@ DEFAULT_SMOOTHING = [0]
         # self.__dict__.update(locals())
         # del self.__dict__["self"]
 
-[docs]    def tokenize(self, text):
-        """Return a tokenized copy of *text*, where each "token" represents
-        a separate topic."""
+# [docs]def tokenize(self, text):
+#         """Return a tokenized copy of *text*, where each "token" represents
+#         a separate topic."""
 
         # lowercase_text = text.lower()
         # paragraph_breaks = self._mark_paragraph_breaks(text)
@@ -116,21 +116,21 @@ DEFAULT_SMOOTHING = [0]
         # End of the Tokenization step
 
         # Lexical score determination
-        if self.similarity_method == BLOCK_COMPARISON:
-            gap_scores = self._block_comparison(tokseqs, token_table)
-        elif self.similarity_method == VOCABULARY_INTRODUCTION:
-            raise NotImplementedError("Vocabulary introduction not implemented")
-        else:
-            raise ValueError(
-                "Similarity method {} not recognized".format(self.similarity_method)
-            )
+        # if self.similarity_method == BLOCK_COMPARISON:
+        #     gap_scores = self._block_comparison(tokseqs, token_table)
+        # elif self.similarity_method == VOCABULARY_INTRODUCTION:
+        #     raise NotImplementedError("Vocabulary introduction not implemented")
+        # else:
+        #     raise ValueError(
+        #         "Similarity method {} not recognized".format(self.similarity_method)
+        #     )
 
-        if self.smoothing_method == DEFAULT_SMOOTHING:
-            smooth_scores = self._smooth_scores(gap_scores)
-        else:
-            raise ValueError(
-                "Smoothing method {} not recognized".format(self.smoothing_method)
-            )
+        # if self.smoothing_method == DEFAULT_SMOOTHING:
+        #     smooth_scores = self._smooth_scores(gap_scores)
+        # else:
+        #     raise ValueError(
+        #         "Smoothing method {} not recognized".format(self.smoothing_method)
+        #     )
         # End of Lexical score Determination
 
         # Boundary identification
@@ -161,49 +161,49 @@ DEFAULT_SMOOTHING = [0]
         return segmented_text
 
 
-    def _block_comparison(self, tokseqs, token_table):
-        """Implements the block comparison method"""
+    # def _block_comparison(self, tokseqs, token_table):
+    #     """Implements the block comparison method"""
 
-        def blk_frq(tok, block):
-            ts_occs = filter(lambda o: o[0] in block, token_table[tok].ts_occurences)
-            freq = sum([tsocc[1] for tsocc in ts_occs])
-            return freq
+    #     def blk_frq(tok, block):
+    #         ts_occs = filter(lambda o: o[0] in block, token_table[tok].ts_occurences)
+    #         freq = sum([tsocc[1] for tsocc in ts_occs])
+    #         return freq
 
-        gap_scores = []
-        numgaps = len(tokseqs) - 1
+    #     gap_scores = []
+    #     numgaps = len(tokseqs) - 1
 
-        for curr_gap in range(numgaps):
-            score_dividend, score_divisor_b1, score_divisor_b2 = 0.0, 0.0, 0.0
-            score = 0.0
-            # adjust window size for boundary conditions
-            if curr_gap < self.k - 1:
-                window_size = curr_gap + 1
-            elif curr_gap > numgaps - self.k:
-                window_size = numgaps - curr_gap
-            else:
-                window_size = self.k
+    #     for curr_gap in range(numgaps):
+    #         score_dividend, score_divisor_b1, score_divisor_b2 = 0.0, 0.0, 0.0
+    #         score = 0.0
+    #         # adjust window size for boundary conditions
+    #         if curr_gap < self.k - 1:
+    #             window_size = curr_gap + 1
+    #         elif curr_gap > numgaps - self.k:
+    #             window_size = numgaps - curr_gap
+    #         else:
+    #             window_size = self.k
 
-            b1 = [ts.index for ts in tokseqs[curr_gap - window_size + 1 : curr_gap + 1]]
-            b2 = [ts.index for ts in tokseqs[curr_gap + 1 : curr_gap + window_size + 1]]
+    #         b1 = [ts.index for ts in tokseqs[curr_gap - window_size + 1 : curr_gap + 1]]
+    #         b2 = [ts.index for ts in tokseqs[curr_gap + 1 : curr_gap + window_size + 1]]
 
-            for t in token_table:
-                score_dividend += blk_frq(t, b1) * blk_frq(t, b2)
-                score_divisor_b1 += blk_frq(t, b1) ** 2
-                score_divisor_b2 += blk_frq(t, b2) ** 2
-            try:
-                score = score_dividend / math.sqrt(score_divisor_b1 * score_divisor_b2)
-            except ZeroDivisionError:
-                pass  # score += 0.0
+    #         for t in token_table:
+    #             score_dividend += blk_frq(t, b1) * blk_frq(t, b2)
+    #             score_divisor_b1 += blk_frq(t, b1) ** 2
+    #             score_divisor_b2 += blk_frq(t, b2) ** 2
+    #         try:
+    #             score = score_dividend / math.sqrt(score_divisor_b1 * score_divisor_b2)
+    #         except ZeroDivisionError:
+    #             pass  # score += 0.0
 
-            gap_scores.append(score)
+    #         gap_scores.append(score)
 
-        return gap_scores
+    #     return gap_scores
 
-    def _smooth_scores(self, gap_scores):
-        "Wraps the smooth function from the SciPy Cookbook"
-        return list(
-            smooth(numpy.array(gap_scores[:]), window_len=self.smoothing_width + 1)
-        )
+    # def _smooth_scores(self, gap_scores):
+    #     "Wraps the smooth function from the SciPy Cookbook"
+    #     return list(
+    #         smooth(numpy.array(gap_scores[:]), window_len=self.smoothing_width + 1)
+    #     )
 
     # def _mark_paragraph_breaks(self, text):
     #     """Identifies indented text or line breaks as the beginning of
@@ -315,35 +315,35 @@ DEFAULT_SMOOTHING = [0]
                     boundaries[dt[1]] = 0
         return boundaries
 
-    def _depth_scores(self, scores):
-        """Calculates the depth of each gap, i.e. the average difference
-        between the left and right peaks and the gap's score"""
+    # def _depth_scores(self, scores):
+    #     """Calculates the depth of each gap, i.e. the average difference
+    #     between the left and right peaks and the gap's score"""
 
-        depth_scores = [0 for x in scores]
-        # clip boundaries: this holds on the rule of thumb(my thumb)
-        # that a section shouldn't be smaller than at least 2
-        # pseudosentences for small texts and around 5 for larger ones.
+    #     depth_scores = [0 for x in scores]
+    #     # clip boundaries: this holds on the rule of thumb(my thumb)
+    #     # that a section shouldn't be smaller than at least 2
+    #     # pseudosentences for small texts and around 5 for larger ones.
 
-        clip = min(max(len(scores) // 10, 2), 5)
-        index = clip
+    #     clip = min(max(len(scores) // 10, 2), 5)
+    #     index = clip
 
-        for gapscore in scores[clip:-clip]:
-            lpeak = gapscore
-            for score in scores[index::-1]:
-                if score >= lpeak:
-                    lpeak = score
-                else:
-                    break
-            rpeak = gapscore
-            for score in scores[index:]:
-                if score >= rpeak:
-                    rpeak = score
-                else:
-                    break
-            depth_scores[index] = lpeak + rpeak - 2 * gapscore
-            index += 1
+    #     for gapscore in scores[clip:-clip]:
+    #         lpeak = gapscore
+    #         for score in scores[index::-1]:
+    #             if score >= lpeak:
+    #                 lpeak = score
+    #             else:
+    #                 break
+    #         rpeak = gapscore
+    #         for score in scores[index:]:
+    #             if score >= rpeak:
+    #                 rpeak = score
+    #             else:
+    #                 break
+    #         depth_scores[index] = lpeak + rpeak - 2 * gapscore
+    #         index += 1
 
-        return depth_scores
+    #     return depth_scores
 
     def _normalize_boundaries(self, text, boundaries, paragraph_breaks):
         """Normalize the boundaries identified to the original text's
@@ -380,23 +380,21 @@ DEFAULT_SMOOTHING = [0]
 
 
 
-[docs]class TokenTableField(object):
-    """A field in the token table holding parameters for each token,
-    used later in the process"""
+# [docs]class TokenTableField(object):
+#     """A field in the token table holding parameters for each token,
+#     used later in the process"""
 
-    def __init__(
-        self,
-        first_pos,
-        ts_occurences,
-        total_count=1,
-        par_count=1,
-        last_par=0,
-        last_tok_seq=None,
-    ):
-        self.__dict__.update(locals())
-        del self.__dict__["self"]
-
-
+#     def __init__(
+#         self,
+#         first_pos,
+#         ts_occurences,
+#         total_count=1,
+#         par_count=1,
+#         last_par=0,
+#         last_tok_seq=None,
+#     ):
+#         self.__dict__.update(locals())
+#         del self.__dict__["self"]
 
 # [docs]class TokenSequence(object):
 #     "A token list with its original length and its index"
@@ -406,63 +404,59 @@ DEFAULT_SMOOTHING = [0]
 #         self.__dict__.update(locals())
 #         del self.__dict__["self"]
 
+# # Pasted from the SciPy cookbook: http://www.scipy.org/Cookbook/SignalSmooth
+# [docs]def smooth(x, window_len=11, window="flat"):
+#     """smooth the data using a window with requested size.
 
+#     This method is based on the convolution of a scaled window with the signal.
+#     The signal is prepared by introducing reflected copies of the signal
+#     (with the window size) in both ends so that transient parts are minimized
+#     in the beginning and end part of the output signal.
 
-# Pasted from the SciPy cookbook: http://www.scipy.org/Cookbook/SignalSmooth
-[docs]def smooth(x, window_len=11, window="flat"):
-    """smooth the data using a window with requested size.
+#     :param x: the input signal
+#     :param window_len: the dimension of the smoothing window; should be an odd integer
+#     :param window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+#         flat window will produce a moving average smoothing.
 
-    This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal
-    (with the window size) in both ends so that transient parts are minimized
-    in the beginning and end part of the output signal.
+#     :return: the smoothed signal
 
-    :param x: the input signal
-    :param window_len: the dimension of the smoothing window; should be an odd integer
-    :param window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-        flat window will produce a moving average smoothing.
+#     example::
 
-    :return: the smoothed signal
+#         t=linspace(-2,2,0.1)
+#         x=sin(t)+randn(len(t))*0.1
+#         y=smooth(x)
 
-    example::
+#     :see also: numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve,
+#         scipy.signal.lfilter
 
-        t=linspace(-2,2,0.1)
-        x=sin(t)+randn(len(t))*0.1
-        y=smooth(x)
+#     TODO: the window parameter could be the window itself if an array instead of a string
+#     """
 
-    :see also: numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve,
-        scipy.signal.lfilter
+#     if x.ndim != 1:
+#         raise ValueError("smooth only accepts 1 dimension arrays.")
 
-    TODO: the window parameter could be the window itself if an array instead of a string
-    """
+#     if x.size < window_len:
+#         raise ValueError("Input vector needs to be bigger than window size.")
 
-    if x.ndim != 1:
-        raise ValueError("smooth only accepts 1 dimension arrays.")
+#     if window_len < 3:
+#         return x
 
-    if x.size < window_len:
-        raise ValueError("Input vector needs to be bigger than window size.")
+#     if window not in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
+#         raise ValueError(
+#             "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+#         )
 
-    if window_len < 3:
-        return x
+#     s = numpy.r_[2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
 
-    if window not in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
-        raise ValueError(
-            "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
-        )
+#     # print(len(s))
+#     if window == "flat":  # moving average
+#         w = numpy.ones(window_len, "d")
+#     else:
+#         w = eval("numpy." + window + "(window_len)")
 
-    s = numpy.r_[2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
+#     y = numpy.convolve(w / w.sum(), s, mode="same")
 
-    # print(len(s))
-    if window == "flat":  # moving average
-        w = numpy.ones(window_len, "d")
-    else:
-        w = eval("numpy." + window + "(window_len)")
-
-    y = numpy.convolve(w / w.sum(), s, mode="same")
-
-    return y[window_len - 1 : -window_len + 1]
-
-
+#     return y[window_len - 1 : -window_len + 1]
 
 [docs]def demo(text=None):
     from nltk.corpus import brown
