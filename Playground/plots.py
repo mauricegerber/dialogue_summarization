@@ -6,7 +6,7 @@ import re
 import math
 
 import nltk
-from nltk.corpus import stopwords, wordnet
+from nltk.corpus import stopwords, wordnet, brown
 from nltk.tokenize import word_tokenize
 from wordcloud import WordCloud
 
@@ -14,6 +14,7 @@ from nltk.tokenize.api import TokenizerI
 
 transcript = pd.read_csv(
         filepath_or_buffer="Playground\Vice presidential debate.csv",
+        #filepath_or_buffer="Playground\Job interview.csv",
         header=0,
         names=["Speaker", "Time", "End time", "Duration", "Utterance"],
         usecols=["Speaker", "Time", "Utterance"],
@@ -25,10 +26,9 @@ counter = 0
 for t in transcript["Utterance"]:
     counter += 1
     text += " " + t
-    if counter == 10:
+    if counter == 3:
         text += " " + t + "\n\n"
         counter = 0
-#print(text)
 
 def _mark_paragraph_breaks(text):
     "Identifies indented text or line breaks as the beginning of paragraphs"
@@ -238,6 +238,73 @@ def _depth_scores(scores):
     
     return depth_scores
 
+def _identify_boundaries(depth_scores):
+    """Identifies boundaries at the peaks of similarity score
+    differences"""
+
+    boundaries = [0 for x in depth_scores]
+
+    avg = sum(depth_scores) / len(depth_scores)
+    stdev = np.std(depth_scores)
+    # print(avg) ;print(stdev)
+
+    cutoff = avg - stdev / 2.0
+    # print(cutoff)
+
+    depth_tuples = sorted(zip(depth_scores, range(len(depth_scores))))
+    depth_tuples.reverse()
+    hp = list(filter(lambda x: x[0] > cutoff, depth_tuples))
+
+    for dt in hp:
+        boundaries[dt[1]] = 1
+        for dt2 in hp:  # undo if there is a boundary close already
+            if (
+                dt[1] != dt2[1]
+                and abs(dt2[1] - dt[1]) < 4
+                and boundaries[dt2[1]] == 1
+            ):
+                boundaries[dt[1]] = 0
+    return boundaries
+
+def _normalize_boundaries(text, boundaries, paragraph_breaks):
+    """Normalize the boundaries identified to the original text's
+    paragraph breaks"""
+
+    norm_boundaries = []
+    char_count, word_count, gaps_seen = 0, 0, 0
+    seen_word = False
+
+    for char in text:
+        char_count += 1
+        # print("char ", char)
+        if char in " \t\n" and seen_word:
+            # print("first if")
+            seen_word = False
+            word_count += 1
+        if char not in " \t\n" and not seen_word:
+            # print("second if")
+            seen_word = True
+        if gaps_seen < len(boundaries) and word_count > (max(gaps_seen * w, w)): # gap between token sequences
+            # print("third if")
+            # print("boundaries at gaps_seen ", boundaries[gaps_seen])
+            if boundaries[gaps_seen] == 1:
+                # find closest paragraph break
+                best_fit = len(text)
+                for br in paragraph_breaks:
+                    if best_fit > abs(br - char_count):
+                        # print("current best_fit ", best_fit)
+                        best_fit = abs(br - char_count)
+                        # print("new best_fit",best_fit)
+                        bestbr = br
+                        # print("best break", br)
+                    else:
+                        break
+                if bestbr not in norm_boundaries:  # avoid duplicates
+                    norm_boundaries.append(bestbr)
+            gaps_seen += 1
+
+    return norm_boundaries
+
 class TokenSequence(object):
     "A token list with its original length and its index"
     def __init__(self, index, wrdindex_list, original_length=None):
@@ -279,10 +346,14 @@ smoothing_width=2
 
 ### tokenize function
 
+text = brown.raw()[:10000]
+print(text)
+
 lowercase_text = text.lower()
 paragraph_breaks = _mark_paragraph_breaks(text)
 text_length = len(lowercase_text)
-# print(paragraph_breaks); print(text_length)
+print(paragraph_breaks) # [0, 8514, 11393, 19021, 26556, 32490, 39524, 45601]
+# print(text_length) 
 
 ## Tokenization step starts here
 
@@ -290,6 +361,7 @@ text_length = len(lowercase_text)
 nopunct_text = "".join(c for c in lowercase_text if re.match("[a-z\-' \n\t]", c)) # removes punctuation
 nopunct_par_breaks = _mark_paragraph_breaks(nopunct_text)
 # print(nopunct_par_breaks)
+# print(nopunct_text)
 
 tokseqs = _divide_to_tokensequences(nopunct_text)
 
@@ -328,22 +400,37 @@ depth_scores = _depth_scores(smooth_scores)
 # print(test[index::-1]) # [5, 4, 3, 2, 1, 0]
 
 # print(depth_scores)
-plt.plot(range(len(depth_scores)), depth_scores)
-plt.show()
+# plt.plot(range(len(depth_scores)), depth_scores)
+# plt.show()
 
+segment_boundaries = _identify_boundaries(depth_scores)
+# print(segment_boundaries)
 
+normalized_boundaries = _normalize_boundaries(text, segment_boundaries, paragraph_breaks)
+print(normalized_boundaries)
 
+segmented_text = []
+prevb = 0
 
+for b in normalized_boundaries:
+    if b == 0:
+        continue
+    segmented_text.append(text[prevb:b])
+    prevb = b
 
+if prevb < text_length:  # append any text that may be remaining
+    segmented_text.append(text[prevb:])
 
+# if not segmented_text:
+#     segmented_text = [text]
 
+# if self.demo_mode:
+#     return gap_scores, smooth_scores, depth_scores, segment_boundaries
+# return segmented_text
 
-
-
-
-
-
-
+#print(text)
+#print()
+#print(segmented_text[1])
 
 
 
