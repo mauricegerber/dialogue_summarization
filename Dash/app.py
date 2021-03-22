@@ -330,37 +330,41 @@ def create_keywords_plot(selected_transcript):
     return fig
 
 
-def parse_contents(contents, filename):
-    content_type, content_string = contents.split(',')
+def parse_contents(contents):
+    # content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
+            #df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+            new_file = io.StringIO(decoded.decode('utf-8'))
         elif 'xls' in filename:
             # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
+            # df = pd.read_excel(io.BytesIO(decoded))
+            new_file = io.BytesIO(decoded)
     except Exception as e:
         print(e)
         return html.Div([
             'There was an error processing this file.'
         ])
+    transcripts.append(new_file)
+    return transcipts
 
-    return html.Div([
-        html.H5(filename)])
-
-@app.callback(Output('output-data-upload', 'children'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),)
+@app.callback(Output("transcript_selector", component_property="value"),  
+              Input('upload-data', 'contents'))
 
 
-def update_output(list_of_contents, list_of_names):
+def update_transcripts(list_of_contents):
     if list_of_contents is not None:
-        children = [
-            parse_contents(c, n) for c, n in
-            zip(list_of_contents, list_of_names)]
+        children = parse_contents(list_of_contents)
+    
+        # transcript = pd.read_csv(
+        # filepath_or_buffer=transcripts_dir + selected_transcript,
+        # header=0,
+        # names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+        # usecols=["Speaker", "Time", "Utterance"],)
+        # transcript["Time"] = transcript["Time"].str.replace("60", "59")
         return children
 
 
