@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import time
 import base64
+import io
 
 import dash
 import dash_core_components as dcc
@@ -51,7 +52,7 @@ for file in transcripts_files:
 initial_transcript = transcripts[initial_transcript_index]
 initial_timeline_min = initial_transcript["Timestamp"][0]
 initial_timeline_max = initial_transcript["Timestamp"][initial_transcript.index[-1]]
-#print(transcripts[1])
+
 app.layout = dbc.Container(
     [
         html.Br(),
@@ -69,10 +70,13 @@ app.layout = dbc.Container(
                     ],
                     width=3,
                 ),
-                # dbc.Col([dcc.Upload(children = [dbc.Button('Upload')], id = "upload_input"),
-                # html.Div(id='output-data-upload', children = []),
+                dbc.Col(
+                    [
+                        dcc.Upload(children = [dbc.Button("Upload")], id = "upload_input"),
+                        html.Div(id="output-data-upload", children = []),
                     
-                #])
+                    ],
+                ),
             ],
         ),
         html.Br(),
@@ -308,32 +312,45 @@ def create_keywords_plot(selected_transcript):
     return fig
 
 
-# def parse_contents(contents, filename, date):
-#     content_type, content_string = contents.split(',')
+def parse_contents(contents, filename, date):
+    content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+ 
+    try:
+        df = pd.read_csv(
+            filepath_or_buffer=io.StringIO(decoded.decode('utf-8')),
+            header=0,
+            names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+            usecols=["Speaker", "Time", "Utterance"]
+        )
+        
+    except Exception as e:
+        print(e)
+        return html.Div(['There was an error processing this file.'])
+        
+    return df
 
-#     decoded = base64.b64decode(content_string)
-#     try:
-#         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-#     except Exception as e:
-#         print(e)
-#         return html.Div(['There was an error processing this file.'])
 
-#     return df
+@app.callback(
+    Output(component_id="transcript_selector", component_property="options"),
+    Input(component_id="upload_input", component_property="contents"),
+    State(component_id="upload_input", component_property="filename"),
+    State(component_id="upload_input", component_property="last_modified"))
 
 
-# @app.callback(
-#     Output('output-data-upload', "children"),
-#     Input('upload_input', 'contents'),
-#     State('upload_input', 'filename'),
-#     State('upload_input', 'last_modified'))
+def update_transcripts(list_of_contents, list_of_names, list_of_dates):  
+    if list_of_contents is not None:
 
+        transcript = parse_contents(list_of_contents, list_of_names, list_of_dates)
+        
+        transcript["Time"] = transcript["Time"].str.replace("60", "59")
+        calculate_timestamps(transcript)
+        
+        transcripts.append(transcript)
+        transcripts_files.append(list_of_names)
+        return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))]
 
-# def update_transcripts(list_of_contents, list_of_names, list_of_dates):
-#     if list_of_contents is not None:
-#         children = [
-#             parse_contents(c, n, d) for c, n, d in
-#             zip(list_of_contents, list_of_names, list_of_dates)]
-#         return children
+    return dash.no_update
 
 
 
