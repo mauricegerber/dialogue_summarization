@@ -48,6 +48,7 @@ for file in transcripts_files:
     transcript["Time"] = transcript["Time"].str.replace("60", "59")
     calculate_timestamps(transcript)
     transcripts.append(transcript)
+print(transcripts_files)
 
 initial_transcript = transcripts[initial_transcript_index]
 initial_timeline_min = initial_transcript["Timestamp"][0]
@@ -339,8 +340,9 @@ def parse_contents(contents, filename, date):
 
 
 def update_transcripts(list_of_contents, list_of_names, list_of_dates):  
+    print(dash.callback_context.triggered[0]["prop_id"])
     if list_of_contents is not None:
-
+        print("if")
         transcript = parse_contents(list_of_contents, list_of_names, list_of_dates)
         
         transcript["Time"] = transcript["Time"].str.replace("60", "59")
@@ -350,7 +352,7 @@ def update_transcripts(list_of_contents, list_of_names, list_of_dates):
         transcripts_files.append(list_of_names)
         return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))]
 
-    return dash.no_update
+    return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))]
 
 
 
