@@ -87,7 +87,16 @@ app.layout = dbc.Container(
                     [
                         dcc.Upload(children = [dbc.Button("Upload", style={"width": "100%"})], id = "upload_input", style={"width": "8%"}),
                         html.Div(id="output-data-upload", children = []),
-                    
+
+                        dbc.Modal([
+                            dbc.ModalHeader("Upload succesfull"),
+                            dbc.ModalBody("The uploaded file is now available in the Dropdown Menue"),
+                            dbc.ModalFooter(
+                                dbc.Button("Close", id="close", className="ml-auto")
+                                ),
+                            ],
+                            id="modal_upload",
+                        ),
                     ],
                 ),
             ],
@@ -618,10 +627,17 @@ def parse_contents(contents, filename, date):
 
 @app.callback(
     Output(component_id="transcript_selector", component_property="options"),
+    Output(component_id ="modal_upload", component_property="is_open"),
     Input(component_id="upload_input", component_property="contents"),
+    Input(component_id="close", component_property="n_clicks"),
     State(component_id="upload_input", component_property="filename"),
-    State(component_id="upload_input", component_property="last_modified"))
-def update_transcripts(list_of_contents, list_of_names, list_of_dates):  
+    State(component_id="upload_input", component_property="last_modified"),
+    State(component_id="modal_upload", component_property="is_open"))
+
+def update_transcripts(list_of_contents, modal_upload_input, list_of_names, list_of_dates, is_open):
+    if is_open == True:
+        return dash.no_update, False
+
     if list_of_contents is not None:
         transcript = parse_contents(list_of_contents, list_of_names, list_of_dates)
         
@@ -630,9 +646,9 @@ def update_transcripts(list_of_contents, list_of_names, list_of_dates):
         
         transcripts.append(transcript)
         transcripts_files.append(list_of_names)
-        return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))]
+        return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))], True
 
-    return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))]
+    return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))], False
 
 
 
