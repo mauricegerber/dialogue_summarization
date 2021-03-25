@@ -6,11 +6,14 @@ import re
 import math
 
 import nltk
-from nltk.corpus import stopwords, wordnet, brown
+from nltk.corpus import stopwords#, wordnet, brown
 from nltk.tokenize import word_tokenize
-from wordcloud import WordCloud
+#from wordcloud import WordCloud
+from nltk.stem import PorterStemmer
 
-from nltk.tokenize.api import TokenizerI
+#from nltk.tokenize.api import TokenizerI
+
+ps = PorterStemmer()
 
 transcript = pd.read_csv(
         filepath_or_buffer="Playground\Vice presidential debate.csv",
@@ -26,7 +29,7 @@ counter = 0
 for t in transcript["Utterance"]:
     counter += 1
     text += " " + t
-    if counter == 3:
+    if counter == 10:
         text += " " + t + "\n\n"
         counter = 0
 
@@ -50,7 +53,7 @@ def _divide_to_tokensequences(text):
     wrdindex_list = []
     matches = re.finditer("\w+", text) # gets positions of every word in text
     for match in matches:
-        wrdindex_list.append((match.group(), match.start())) # list of tuples with word and word starting position
+        wrdindex_list.append((ps.stem(match.group()), match.start())) # list of tuples with word and word starting position
     return [TokenSequence(i / w, wrdindex_list[i : i + w]) for i in range(0, len(wrdindex_list), w)] # make an object of class TokenSequence
     # [(0.0, [('i', 1), ('m', 3), ('susan', 5), ('page', 11), ('of', 16), ('usa', 19), ('today', 23), ('it', 29), ('is', 32), ('my', 35), ('honor', 38), ('to', 44), ('moderate', 47), ('this', 56), ('debate', 61), ('an', 68), ('important', 71), ('part', 81), ('of', 86), ('our', 89)]),
     #  (1.0, [('democracy', 93), ('in', 103), ('kingsbury', 106), ('hall', 116), ('tonight', 121), ('we', 129), ('have', 132), ('a', 137), ('small', 139), ('and', 145), ('socially', 149), ('distant', 158), ('audience', 166), ('and', 175), ('we', 179), ('ve', 182), ('taken', 185), ('extra', 191), ('precautions', 197), ('during', 209)])]
@@ -346,8 +349,8 @@ smoothing_width=2
 
 ### tokenize function
 
-text = brown.raw()[:10000]
-print(text)
+#text = brown.raw()[:10000]
+#print(text)
 
 lowercase_text = text.lower()
 paragraph_breaks = _mark_paragraph_breaks(text)
@@ -368,8 +371,6 @@ tokseqs = _divide_to_tokensequences(nopunct_text)
 ## Filter stopwords
 for ts in tokseqs:
     ts.wrdindex_list = [wi for wi in ts.wrdindex_list if wi[0] not in stopwords]
-# for ts in tokseqs:
-#     print([ts.index, ts.wrdindex_list])
 
 token_table = _create_token_table(tokseqs, nopunct_par_breaks)
 # word = "health"
@@ -388,8 +389,7 @@ gap_scores = _block_comparison(tokseqs, token_table)
 smooth_scores = _smooth_scores(gap_scores)
 # print(smooth_scores)
 # plt.plot(range(len(gap_scores)), gap_scores)
-# plt.plot(range(len(smooth_scores)), smooth_scores)
-# plt.show()
+plt.plot(range(len(smooth_scores)), smooth_scores)
 
 ## Boundary identification
 depth_scores = _depth_scores(smooth_scores)
@@ -400,14 +400,14 @@ depth_scores = _depth_scores(smooth_scores)
 # print(test[index::-1]) # [5, 4, 3, 2, 1, 0]
 
 # print(depth_scores)
-# plt.plot(range(len(depth_scores)), depth_scores)
-# plt.show()
+plt.plot(range(len(depth_scores)), depth_scores)
+plt.show()
 
 segment_boundaries = _identify_boundaries(depth_scores)
 # print(segment_boundaries)
 
 normalized_boundaries = _normalize_boundaries(text, segment_boundaries, paragraph_breaks)
-print(normalized_boundaries)
+#print(normalized_boundaries)
 
 segmented_text = []
 prevb = 0
