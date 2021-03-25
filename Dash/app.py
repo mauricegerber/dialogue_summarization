@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import time
 import base64
+import io
 
 import dash
 import dash_core_components as dcc
@@ -33,17 +34,23 @@ def calculate_timestamps(transcript):
     transcript["Timestamp"] = timestamps
 
 transcripts_dir = "./transcripts/"
-transcripts = os.listdir(transcripts_dir)
+transcripts_files = os.listdir(transcripts_dir)
 initial_transcript_index = 1
-initial_transcript = pd.read_csv(
-    filepath_or_buffer=transcripts_dir + transcripts[initial_transcript_index],
-    header=0,
-    names=["Speaker", "Time", "End time", "Duration", "Utterance"],
-    usecols=["Speaker", "Time", "Utterance"],
-)
-initial_transcript["Time"] = initial_transcript["Time"].str.replace("60", "59")
 
-calculate_timestamps(initial_transcript)
+transcripts = []
+for file in transcripts_files:
+    transcript = pd.read_csv(
+        filepath_or_buffer=transcripts_dir + file,
+        header=0,
+        names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+        usecols=["Speaker", "Time", "Utterance"]
+    )
+    transcript["Time"] = transcript["Time"].str.replace("60", "59")
+    calculate_timestamps(transcript)
+    transcripts.append(transcript)
+print(transcripts_files)
+
+initial_transcript = transcripts[initial_transcript_index]
 initial_timeline_min = initial_transcript["Timestamp"][0]
 initial_timeline_max = initial_transcript["Timestamp"][initial_transcript.index[-1]]
 
@@ -58,30 +65,19 @@ app.layout = dbc.Container(
                     [
                         dbc.Select(
                             id="transcript_selector",
-                            options=[{"label": i, "value": i} for i in transcripts],
-                            value=transcripts[initial_transcript_index],
+                            options=[{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))],
+                            value=initial_transcript_index,
                         ),
                     ],
                     width=3,
                 ),
-                dbc.Col([
-                    dcc.Upload(
-                        id='upload-data',
-                        children=html.Div([html.A('Upload')]),
-                        style={
-                            'width': '10%',
-                            'height': '50px',
-                            'lineHeight': '50px',
-                            'borderWidth': '1px',
-                            'borderStyle': 'solid',
-                            'borderRadius': '5px',
-                            'textAlign': 'center',
-                            'margin': '10px'
-                        },
-                        # Allow multiple files to be uploaded
-                        multiple=True
-                    ),
-                ])
+                dbc.Col(
+                    [
+                        dcc.Upload(children = [dbc.Button("Upload")], id = "upload_input"),
+                        html.Div(id="output-data-upload", children = []),
+                    
+                    ],
+                ),
             ],
         ),
         html.Br(),
@@ -237,15 +233,8 @@ app.layout = dbc.Container(
 )
 def update_transcript_table_and_filters(selected_transcript, selected_speaker, selected_start_time,
                                         selected_end_time, selected_timeline, search_term):
-    transcript = pd.read_csv(
-        filepath_or_buffer=transcripts_dir + selected_transcript,
-        header=0,
-        names=["Speaker", "Time", "End time", "Duration", "Utterance"],
-        usecols=["Speaker", "Time", "Utterance"],
-    )
-    transcript["Time"] = transcript["Time"].str.replace("60", "59")
+    transcript = transcripts[int(selected_transcript)]
 
-    calculate_timestamps(transcript)
     timeline_min = transcript["Timestamp"][0]
     timeline_max = transcript["Timestamp"][transcript.index[-1]]
     timeline_deviation = timeline_max - int(timeline_max/60)*60
@@ -303,13 +292,7 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
     Input(component_id="transcript_selector", component_property="value"),
 )
 def create_keywords_plot(selected_transcript):
-    transcript = pd.read_csv(
-        filepath_or_buffer=transcripts_dir + selected_transcript,
-        header=0,
-        names=["Speaker", "Time", "End time", "Duration", "Utterance"],
-        usecols=["Speaker", "Time", "Utterance"],
-    )
-    transcript["Time"] = transcript["Time"].str.replace("60", "59")
+    transcript = transcripts[int(selected_transcript)]
 
     fig = go.Figure()
 
@@ -330,38 +313,47 @@ def create_keywords_plot(selected_transcript):
     return fig
 
 
-def parse_contents(contents, filename):
+def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
-
     decoded = base64.b64decode(content_string)
+ 
     try:
-        if 'csv' in filename:
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-        elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
+        df = pd.read_csv(
+            filepath_or_buffer=io.StringIO(decoded.decode('utf-8')),
+            header=0,
+            names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+            usecols=["Speaker", "Time", "Utterance"]
+        )
+        
     except Exception as e:
         print(e)
-        return html.Div([
-            'There was an error processing this file.'
-        ])
-
-    return html.Div([
-        html.H5(filename)])
-
-@app.callback(Output('output-data-upload', 'children'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),)
+        return html.Div(['There was an error processing this file.'])
+        
+    return df
 
 
-def update_output(list_of_contents, list_of_names):
+@app.callback(
+    Output(component_id="transcript_selector", component_property="options"),
+    Input(component_id="upload_input", component_property="contents"),
+    State(component_id="upload_input", component_property="filename"),
+    State(component_id="upload_input", component_property="last_modified"))
+
+
+def update_transcripts(list_of_contents, list_of_names, list_of_dates):  
+    print(dash.callback_context.triggered[0]["prop_id"])
     if list_of_contents is not None:
-        children = [
-            parse_contents(c, n) for c, n in
-            zip(list_of_contents, list_of_names)]
-        return children
+        print("if")
+        transcript = parse_contents(list_of_contents, list_of_names, list_of_dates)
+        
+        transcript["Time"] = transcript["Time"].str.replace("60", "59")
+        calculate_timestamps(transcript)
+        
+        transcripts.append(transcript)
+        transcripts_files.append(list_of_names)
+        return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))]
+
+    return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))]
+
 
 
 
