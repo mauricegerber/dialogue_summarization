@@ -710,4 +710,9 @@ def update_transcripts(list_of_contents, modal_upload_input, list_of_names, list
 #     return fig
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    # context = ("/etc/letsencrypt/live/projects.pascalaigner.ch/cert.pem", "/etc/letsencrypt/live/projects.pascalaigner.ch/privkey.pem")
+    app.run_server(
+        # host="projects.pascalaigner.ch",
+        # port=443,
+        # ssl_context=context,
+        debug=True)
