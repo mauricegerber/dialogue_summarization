@@ -627,8 +627,8 @@ def parse_contents(contents, filename, date):
 
 @app.callback(
     Output(component_id="transcript_selector", component_property="options"),
-    Output(component_id ="modal_upload", component_property="is_open"),
-    Output("output_file", "children"),
+    Output(component_id="modal_upload", component_property="is_open"),
+    Output(component_id="output_file", component_property="children"),
     Input(component_id="upload_input", component_property="contents"),
     Input(component_id="close", component_property="n_clicks"),
     State(component_id="upload_input", component_property="filename"),
@@ -648,7 +648,8 @@ def update_transcripts(list_of_contents, modal_upload_input, list_of_names, list
         transcripts.append(transcript)
         transcripts_files.append(list_of_names)
 
-        output_name = list_of_names[:-4] + " is now available in the Dropdown Menue"
+        index = len(list_of_names) - list_of_names.find(".",(len(list_of_names)-5))
+        output_name = list_of_names[:-index] + " is now available in the Dropdown Menue"
         return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))], True, output_name
 
     return [{"label": transcripts_files[i], "value": i} for i in range(len(transcripts_files))], False, ""
