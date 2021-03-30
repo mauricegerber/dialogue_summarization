@@ -33,11 +33,12 @@ smoothing_width=2
 
 text = ""
 utterance_break = 0
-utterance_breaks = []
+utterance_breaks = [0]
 for utterance in transcript["Utterance"].str.lower():
     text += utterance
     utterance_break += len(utterance)
     utterance_breaks.append(utterance_break)
+del utterance_breaks[-1]
 print(utterance_breaks)
 # print(text)
 
@@ -180,27 +181,32 @@ def identify_boundaries(depth_scores):
 
     removed_boundaries = []
     for i in range(1, len(boundaries)):
-        if boundaries[i] < boundaries[i-1] + 10:
+        if boundaries[i] <= boundaries[i-1] + 10:
             removed_boundaries.append(boundaries[i])
     boundaries = [b for b in boundaries if b not in removed_boundaries]
 
     return boundaries
 
 boundaries = identify_boundaries(depth_scores)
-print(boundaries)
+# print(boundaries)
+# print(len(depth_scores))
+# print(len(tokseqs))
 
-utterance_breaks_boundaries = []
+boundaries_in_text = []
 for ts in tokseqs:
-    if ts.index+1 in boundaries:
-        utterance_breaks_boundaries.append(ts.word_list[-1][1])
+    if ts.index in boundaries:
+        boundaries_in_text.append(ts.word_list[-1][1])
+print(boundaries_in_text)
 
-print(utterance_breaks_boundaries)
+normalized_boundaries_in_text = []
+for b in boundaries_in_text:
+    diff = list(map(lambda list_value: b - list_value, utterance_breaks))
+    closest_smaller_value = max([i for i in range(len(diff)) if diff[i] > 0])
+    normalized_boundaries_in_text.append(closest_smaller_value)
+print(normalized_boundaries_in_text)
 
-# utterance_segments = []
+
 # for i in range(len(utterance_breaks)):
-
-
-
 
 
 
