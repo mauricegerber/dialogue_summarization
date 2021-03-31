@@ -58,7 +58,7 @@ for file in transcript_files:
 
 initial_transcript = transcripts[initial_transcript_index]
 initial_timeline_min = initial_transcript["Timestamp"][0]
-initial_timeline_max = initial_transcript["Timestamp"][initial_transcript.index[-1]]
+initial_timeline_max = initial_transcript["Timestamp"][len(initial_transcript)-1]
 
 app.layout = dbc.Container(
     [
@@ -292,11 +292,13 @@ app.layout = dbc.Container(
 )
 def update_transcript_table_and_filters(selected_transcript, selected_speaker, selected_start_time,
                                         selected_end_time, selected_timeline, search_term):
-    transcript = transcripts[int(selected_transcript)]
+    transcript = transcripts[int(selected_transcript)] # selected_transcript is str, must be int
 
     timeline_min = transcript["Timestamp"][0]
-    timeline_max = transcript["Timestamp"][transcript.index[-1]]
-    timeline_deviation = timeline_max - int(timeline_max/60)*60
+    timeline_max = transcript["Timestamp"][len(transcript)-1]
+    # difference between timeline_max and start of last minute, e.g. 44:21 - 44:00 = 00:21
+    timeline_deviation = timeline_max - math.floor(timeline_max/60)*60
+    marks = dict()
 
     trigger = dash.callback_context.triggered[0]["prop_id"]
 
@@ -306,25 +308,28 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
         
         return (transcript_table, [{"label": i, "value": i} for i in sorted(speakers, key=str.lower)], speakers,
                 "00:00", time.strftime("%H:%M", time.gmtime(timeline_max)),
-                timeline_min, timeline_max, [timeline_min, timeline_max], dict(), None)
+                timeline_min, timeline_max, [timeline_min, timeline_max], marks, None)
     
     if trigger != "." and trigger != "transcript_selector.value":
-        marks = dict()
         transcript = transcript[transcript["Speaker"].isin(selected_speaker)]
         
+        # if double letter occurs, word highlighting does not work properly due to markdown syntax
+        # therefore, search is only enabled for search terms longer than 1 character
         if search_term != None and len(search_term) > 1:
             transcript = transcript[transcript["Utterance"].str.contains(search_term, case=False, regex=False)]
+            # if last character in search_term is a space, word highlighting does not work properly due to markdown syntax
             if search_term[-1] == " ":
                 transcript["Utterance"] = transcript["Utterance"].str.replace(search_term[:-1], "**" + search_term[:-1] + "**", case=False)
             else:
                 transcript["Utterance"] = transcript["Utterance"].str.replace(search_term, "**" + search_term + "**", case=False)
-            mark_symbol = ["|"] * len(transcript)
-            marks = dict(zip(transcript["Timestamp"], mark_symbol))
+            marks = dict(zip(transcript["Timestamp"], ["|"] * len(transcript)))
 
         if trigger == "start_time_input.value" or trigger == "end_time_input.value":
             first_timestamp = datetime.strptime("0:00", "%M:%S")
             current_start_time = datetime.strptime(selected_start_time, "%H:%M")
             current_end_time = datetime.strptime(selected_end_time, "%H:%M")
+            # timeline_deviation is added to prevent last utterances from being filtered out
+            # e.g. if 00:44 is entered, utterances from 00:44:01 to 00:44:21 would be filtered out if timeline_deviation was not added
             timeline_slider_values = [(current_start_time - first_timestamp).total_seconds(),
                                       (current_end_time - first_timestamp).total_seconds() + timeline_deviation]
             transcript = transcript[transcript["Timestamp"] >= timeline_slider_values[0]]
@@ -332,7 +337,7 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
             transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
             
             return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                    dash.no_update, dash.no_update, timeline_slider_values, marks, dash.no_update)
+                    dash.no_update, dash.no_update, timeline_slider_values, dash.no_update, dash.no_update)
 
         transcript = transcript[transcript["Timestamp"] >= selected_timeline[0]]
         transcript = transcript[transcript["Timestamp"] <= selected_timeline[1]]
