@@ -60,11 +60,11 @@ initial_transcript = transcripts[initial_transcript_index]
 initial_timeline_min = initial_transcript["Timestamp"][0]
 initial_timeline_max = initial_transcript["Timestamp"][len(initial_transcript)-1]
 
+vertical_space = "15px"
+
 app.layout = dbc.Container(
     [
-        html.Br(),
         html.H1("Dialog analyzer"),
-        html.Br(),
         dbc.Row(
             [
                 dbc.Col(
@@ -79,35 +79,58 @@ app.layout = dbc.Container(
                 ),
                 dbc.Col(
                     [
-                        dcc.Upload(children = [dbc.Button("Upload", style={"width": "100%"})], id = "upload_input", style={"width": "8%"}),
-                        html.Div(id="output-data-upload", children = []),
-
-                        dbc.Modal([
-                            dbc.ModalHeader("Upload succesfull"),
-                            dbc.ModalBody(html.Div(id = "output_file")),
-                            dbc.ModalFooter(
-                                dbc.Button("Close", id="close", className="ml-auto")
+                        dcc.Upload(
+                            id="transcript_upload_button",
+                            children=[
+                                dbc.Button(
+                                    "Upload",
+                                    className="btn-outline-primary",
+                                    style={"width": "100%"},
                                 ),
                             ],
+                        ),
+                        dbc.Modal(
                             id="modal_upload",
+                            children=[
+                                dbc.ModalHeader("Upload successful"),
+                                dbc.ModalBody(
+                                    html.Div(id="output_file")
+                                ),
+                                dbc.ModalFooter(
+                                    dbc.Button("Close", id="close", className="ml-auto")
+                                ),
+                            ],
                         ),
                     ],
+                    width=1,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button(
+                            "Delete",
+                            id="transcript_delete_button",
+                            className="btn-outline-primary",
+                            style={"width": "100%"},
+                        ),
+                    ],
+                    width=1,
                 ),
             ],
+            align="center",
         ),
-        html.Br(),
+        html.Div(style={"height": vertical_space}),
         dbc.Row(
             [
                 dbc.Col(
                     [
                         dbc.Tabs(
                             [
-                                dbc.Tab(label="Transcript", id="transcript_tab", children=[
+                                dbc.Tab(label="Transcript", children=[
+                                    html.Div(style={"height": vertical_space}),
                                     dbc.Row(
                                         [
                                             dbc.Col(
                                                 [
-                                                    html.Br(),
                                                     html.H5("Select speaker"),
                                                     dbc.Checklist(
                                                         id="speaker_selector",
@@ -117,11 +140,10 @@ app.layout = dbc.Container(
                                                         value=initial_transcript["Speaker"].unique(),
                                                     ),
                                                 ],
-                                                width=2,
+                                                width="auto",
                                             ),
                                             dbc.Col(
                                                 [
-                                                    html.Br(),
                                                     html.H5("Select time"),
                                                     dbc.Row(
                                                         [
@@ -133,7 +155,7 @@ app.layout = dbc.Container(
                                                                         value="00:00",
                                                                     ),
                                                                 ],
-                                                                width="100px",
+                                                                width="auto",
                                                             ),
                                                             dbc.Col(
                                                                 [
@@ -145,27 +167,24 @@ app.layout = dbc.Container(
                                                                         marks={},
                                                                     ),
                                                                 ],
-                                                                width=9,
                                                             ),
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
                                                                         id="end_time_input",
                                                                         type="time",
-                                                                        value=time.strftime("%H:%M",
-                                                                                            time.gmtime(initial_timeline_max)),
+                                                                        value=time.strftime("%H:%M", time.gmtime(initial_timeline_max)),
                                                                     ),
                                                                 ],
-                                                                width="100px",
+                                                                width="auto",
                                                             ),
                                                         ],
                                                     ),  
                                                 ],
-                                                width=8,
+                                                style={"margin": "0px 100px 0px"},
                                             ),
                                             dbc.Col(
                                                 [
-                                                    html.Br(),
                                                     html.H5("Search"),
                                                     dbc.Input(
                                                         id="search_input",
@@ -173,11 +192,11 @@ app.layout = dbc.Container(
                                                         placeholder="Enter search term here",
                                                     ),
                                                 ],
-                                                width=2,
+                                                width="auto",
                                             ),
                                         ],
                                     ),
-                                    html.Br(),
+                                    html.Div(style={"height": vertical_space}),
                                     dash_table.DataTable(
                                         id="transcript_table",
                                         columns=[
@@ -214,7 +233,7 @@ app.layout = dbc.Container(
                                     ),
                                 ],
                                 ),
-                                dbc.Tab(label="Keywords", id="keywords_tab", children=[
+                                dbc.Tab(label="Keywords", children=[
                                     dbc.Row(
                                         [
                                             dbc.Col(
@@ -240,22 +259,55 @@ app.layout = dbc.Container(
                                                 [
                                                     html.Br(),
                                                     html.H5("Change parameters"),
-                                                    html.Div(style={'display': 'inline-block'}, children=[
-                                                        html.H6("test"),
-                                                        dbc.Input(
-                                                            id="window_size_input",
-                                                            type="number",
-                                                            min=5,
-                                                            max=20,
-                                                            step=1,
-                                                            value=10,
-                                                        ),
-                                                    ],
+                                                    dbc.Row(
+                                                        [
+                                                            dbc.Col(
+                                                                [
+                                                                    html.P("Pseudosentence length (10-30)"),
+                                                                ],
+                                                                #width=8,
+                                                            ),
+                                                            dbc.Col(
+                                                                [
+                                                                    dbc.Input(
+                                                                        id="window_size_input",
+                                                                        type="number",
+                                                                        min=5,
+                                                                        max=20,
+                                                                        step=1,
+                                                                        value=10,
+                                                                    ),
+                                                                ],
+                                                                #width=4,
+                                                            ),                       
+                                                        ],
+                                                    ),
+                                                    dbc.Row(
+                                                        [
+                                                            dbc.Col(
+                                                                [
+                                                                    html.P("Window size (10-30)"),
+                                                                ],
+                                                                #width=8,
+                                                            ),
+                                                            dbc.Col(
+                                                                [
+                                                                    dbc.Input(
+                                                                        id="window_size_input2",
+                                                                        type="number",
+                                                                        min=5,
+                                                                        max=20,
+                                                                        step=1,
+                                                                        value=10,
+                                                                    ),
+                                                                ],
+                                                                #width=4,
+                                                            ),                       
+                                                        ],
                                                     ),
                                                     html.Br(),
-                                                    
                                                 ],
-                                                width=6,
+                                                width=2,
                                             ),
                                         ],
                                     ),  
@@ -318,26 +370,32 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
         if search_term != None and len(search_term) > 1:
             transcript = transcript[transcript["Utterance"].str.contains(search_term, case=False, regex=False)]
             # if last character in search_term is a space, word highlighting does not work properly due to markdown syntax
+            # therefore, it is stripped while highlighting (but not in the search field)
             if search_term[-1] == " ":
                 transcript["Utterance"] = transcript["Utterance"].str.replace(search_term[:-1], "**" + search_term[:-1] + "**", case=False)
             else:
                 transcript["Utterance"] = transcript["Utterance"].str.replace(search_term, "**" + search_term + "**", case=False)
             marks = dict(zip(transcript["Timestamp"], ["|"] * len(transcript)))
-
-        if trigger == "start_time_input.value" or trigger == "end_time_input.value":
-            first_timestamp = datetime.strptime("0:00", "%M:%S")
-            current_start_time = datetime.strptime(selected_start_time, "%H:%M")
-            current_end_time = datetime.strptime(selected_end_time, "%H:%M")
-            # timeline_deviation is added to prevent last utterances from being filtered out
-            # e.g. if 00:44 is entered, utterances from 00:44:01 to 00:44:21 would be filtered out if timeline_deviation was not added
-            timeline_slider_values = [(current_start_time - first_timestamp).total_seconds(),
-                                      (current_end_time - first_timestamp).total_seconds() + timeline_deviation]
-            transcript = transcript[transcript["Timestamp"] >= timeline_slider_values[0]]
-            transcript = transcript[transcript["Timestamp"] <= timeline_slider_values[1]]
-            transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
             
-            return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                    dash.no_update, dash.no_update, timeline_slider_values, dash.no_update, dash.no_update)
+        if trigger == "start_time_input.value" or trigger == "end_time_input.value":
+            # in Firefox the input field can be cleared by clicking the encircled X (which cannot be hidden)
+            # this causes an error with the datetime conversion and is therefore handled as exception
+            try:
+                first_timestamp = datetime.strptime("0:00", "%M:%S")
+                current_start_time = datetime.strptime(selected_start_time, "%H:%M")
+                current_end_time = datetime.strptime(selected_end_time, "%H:%M")
+                # timeline_deviation is added to prevent last utterances from being filtered out
+                # e.g. if 00:44 is entered, utterances from 00:44:01 to 00:44:21 would be filtered out if timeline_deviation was not added
+                timeline_slider_values = [(current_start_time - first_timestamp).total_seconds(),
+                                          (current_end_time - first_timestamp).total_seconds() + timeline_deviation]
+                transcript = transcript[transcript["Timestamp"] >= timeline_slider_values[0]]
+                transcript = transcript[transcript["Timestamp"] <= timeline_slider_values[1]]
+                transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
+
+                return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+                        dash.no_update, dash.no_update, timeline_slider_values, dash.no_update, dash.no_update)
+            except:
+                pass
 
         transcript = transcript[transcript["Timestamp"] >= selected_timeline[0]]
         transcript = transcript[transcript["Timestamp"] <= selected_timeline[1]]
@@ -394,17 +452,15 @@ def parse_contents(contents, filename, date):
         
     return df
 
-
 @app.callback(
     Output(component_id="transcript_selector", component_property="options"),
     Output(component_id="modal_upload", component_property="is_open"),
     Output(component_id="output_file", component_property="children"),
-    Input(component_id="upload_input", component_property="contents"),
+    Input(component_id="transcript_upload_button", component_property="contents"),
     Input(component_id="close", component_property="n_clicks"),
-    State(component_id="upload_input", component_property="filename"),
-    State(component_id="upload_input", component_property="last_modified"),
+    State(component_id="transcript_upload_button", component_property="filename"),
+    State(component_id="transcript_upload_button", component_property="last_modified"),
     State(component_id="modal_upload", component_property="is_open"))
-
 def update_transcripts(list_of_contents, modal_upload_input, list_of_names, list_of_dates, is_open):
     if is_open == True:
         return dash.no_update, False, ""

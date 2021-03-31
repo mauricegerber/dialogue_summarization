@@ -3,6 +3,18 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     display: none;
 }
 
+/*
+.btn-secondary {
+    border: 2px solid #f7f7f9;
+}
+
+.btn-secondary:hover {
+    background-color: #f7f7f9;
+    border: 2px solid #f7f7f9;
+}
+*/
+
+
 #timeline_slider > div {
     margin-top: 13px;
 }
