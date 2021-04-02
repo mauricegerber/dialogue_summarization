@@ -197,39 +197,51 @@ app.layout = dbc.Container(
                                         ],
                                     ),
                                     html.Div(style={"height": vertical_space}),
-                                    dash_table.DataTable(
-                                        id="transcript_table",
-                                        columns=[
-                                            {"name": "Speaker", "id": "Speaker", "presentation": "markdown"},
-                                            {"name": "Time", "id": "Time", "presentation": "markdown"},
-                                            {"name": "Utterance", "id": "Utterance", "presentation": "markdown"}
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    dash_table.DataTable(
+                                                        id="transcript_table",
+                                                        columns=[
+                                                            {"name": "Speaker", "id": "Speaker", "presentation": "markdown"},
+                                                            {"name": "Time", "id": "Time", "presentation": "markdown"},
+                                                            {"name": "Utterance", "id": "Utterance", "presentation": "markdown"}
+                                                        ],
+                                                        data=initial_transcript[["Speaker", "Time", "Utterance"]].to_dict("records"),
+                                                        style_table={"height": "600px", "max-height": "600px"},
+                                                        style_data_conditional=[
+                                                            {"if": {"state": "selected"},
+                                                             "background-color": "white",
+                                                             "border": "1px solid #e9e9e9"},
+                                                        ],
+                                                        style_header={
+                                                            "text-align": "left",
+                                                            "font-family": "sans-serif",
+                                                            "font-size": "13px",
+                                                            "background-color": "#f7f7f9",
+                                                            "border": "none",
+                                                        },
+                                                        style_cell_conditional=[
+                                                            # real column widths in browser view differ slightly from these values
+                                                            {"if": {"column_id": "Speaker"},
+                                                             "width": "80px"},
+                                                            {"if": {"column_id": "Time"},
+                                                             "width": "80px"},
+                                                            {"if": {"column_id": "Utterance"},
+                                                             "width": "900px"},
+                                                        ],
+                                                        style_cell={
+                                                            "white-space": "normal", # required for line breaks in utterance column
+                                                            "padding": "15px",
+                                                            "border": "1px solid #e9e9e9",   
+                                                        },
+                                                        fixed_rows={"headers": True},
+                                                        page_action="none",
+                                                    ),
+                                                ],
+                                            ),
                                         ],
-                                        data=initial_transcript[["Speaker", "Time", "Utterance"]].to_dict("records"),
-                                        style_data_conditional=[
-                                            {"if": {"state": "selected"},
-                                             "background-color": "white",
-                                             "border": "1px solid rgba(0,0,0,0.05)"},
-                                        ],
-                                        style_header={
-                                            "font-size": "0.9rem",
-                                            "background-color": "#f7f7f9",
-                                            "border": "1px solid rgba(0,0,0,0.05)",
-                                        },
-                                        style_cell_conditional=[
-                                            {"if": {"column_id": "Speaker"},
-                                             "width": "150px"},
-                                            {"if": {"column_id": "Time"},
-                                             "width": "100px"},
-                                            {"if": {"column_id": "Utterance"},
-                                             "width": "1450px"},
-                                        ],
-                                        style_cell={
-                                            "white-space": "normal",
-                                            "padding": "1.5rem",
-                                            "border": "1px solid rgba(0,0,0,0.05)",   
-                                        },
-                                        fixed_rows={"headers": True},
-                                        page_action="none",
                                     ),
                                 ],
                                 ),
