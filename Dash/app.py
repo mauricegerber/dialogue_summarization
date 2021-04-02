@@ -181,7 +181,7 @@ app.layout = dbc.Container(
                                                         ],
                                                     ),  
                                                 ],
-                                                style={"margin": "0px 100px 0px"},
+                                                style={"margin": "0% 5% 0%"},
                                             ),
                                             dbc.Col(
                                                 [
