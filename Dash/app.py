@@ -27,6 +27,7 @@ import texttiling
 # https://bootswatch.com/lux/
 BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/lux/bootstrap.min.css"
 app = dash.Dash(external_stylesheets=[BS])
+app.title = "Dialog Analyzer"
 
 def calculate_timestamps(transcript):
     first_timestamp = datetime.strptime("0:00", "%M:%S")
@@ -64,7 +65,7 @@ vertical_space = "15px"
 
 app.layout = dbc.Container(
     [
-        html.H1("Dialog analyzer"),
+        html.H1("Dialog Analyzer"),
         dbc.Row(
             [
                 dbc.Col(
@@ -90,14 +91,16 @@ app.layout = dbc.Container(
                             ],
                         ),
                         dbc.Modal(
-                            id="modal_upload",
+                            id="upload_modal",
                             children=[
-                                dbc.ModalHeader("Upload successful"),
-                                dbc.ModalBody(
-                                    html.Div(id="output_file")
-                                ),
+                                dbc.ModalHeader(id="modal_header", children=[]),
+                                dbc.ModalBody(id="modal_body", children=[]),
                                 dbc.ModalFooter(
-                                    dbc.Button("Close", id="close", className="ml-auto")
+                                    dbc.Button(
+                                        "Close",
+                                        id="modal_close_button",
+                                        className="btn-outline-primary",
+                                    ),
                                 ),
                             ],
                         ),
@@ -351,6 +354,50 @@ app.layout = dbc.Container(
 )
 
 @app.callback(
+    Output(component_id="transcript_selector", component_property="options"),
+    Output(component_id="upload_modal", component_property="is_open"),
+    Output(component_id="modal_header", component_property="children"),
+    Output(component_id="modal_body", component_property="children"),
+    Input(component_id="transcript_upload_button", component_property="contents"),
+    Input(component_id="modal_close_button", component_property="n_clicks"),
+    State(component_id="transcript_upload_button", component_property="filename"),
+    State(component_id="upload_modal", component_property="is_open"),
+)
+def upload_transcripts(list_of_contents, n_clicks, list_of_names, is_open):
+    if is_open == True:
+        return dash.no_update, False, dash.no_update, dash.no_update
+
+    if list_of_contents is not None:
+        content_type, content_string = list_of_contents.split(",")
+        decoded = base64.b64decode(content_string)
+
+        # catch errors while reading the file, e.g. uploaded file is not a csv
+        try:
+            transcript = pd.read_csv(
+                filepath_or_buffer=io.StringIO(decoded.decode("utf-8")),
+                header=0,
+                names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+                usecols=["Speaker", "Time", "Utterance"]
+            )
+            modal_header_text = "Upload successful"
+            modal_body_text = list_of_names + " is now available in the dropdown menu."
+        except Exception as e:
+            return dash.no_update, True, "Error while reading the file", str(e)
+        
+        # catch errors while processing the file, e.g. string cannot be converted to datetime object
+        try:
+            transcript["Time"] = transcript["Time"].str.replace("60", "59")
+            calculate_timestamps(transcript)
+            transcripts.append(transcript)
+            transcript_files.append(list_of_names)
+            return ([{"label": transcript_files[i], "value": i} for i in range(len(transcript_files))],
+                    True, modal_header_text, modal_body_text)
+        except Exception as e:
+            return dash.no_update, True, "Error while processing the file", str(e)
+            
+    return [{"label": transcript_files[i], "value": i} for i in range(len(transcript_files))], False, dash.no_update, dash.no_update
+
+@app.callback(
     Output(component_id="transcript_table", component_property="data"),
     Output(component_id="transcript_table", component_property="css"),
     Output(component_id="speaker_selector", component_property="options"),
@@ -472,56 +519,6 @@ def create_keywords_plot(n_clicks, selected_transcript, additional_stopwords):
     ))
 
     return fig
-
-def parse_contents(contents, filename, date):
-    content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
- 
-    try:
-        df = pd.read_csv(
-            filepath_or_buffer=io.StringIO(decoded.decode('utf-8')),
-            header=0,
-            names=["Speaker", "Time", "End time", "Duration", "Utterance"],
-            usecols=["Speaker", "Time", "Utterance"]
-        )
-        
-    except Exception as e:
-        return html.Div(['There was an error processing this file.'])
-        
-    return df
-
-@app.callback(
-    Output(component_id="transcript_selector", component_property="options"),
-    Output(component_id="modal_upload", component_property="is_open"),
-    Output(component_id="output_file", component_property="children"),
-    Input(component_id="transcript_upload_button", component_property="contents"),
-    Input(component_id="close", component_property="n_clicks"),
-    State(component_id="transcript_upload_button", component_property="filename"),
-    State(component_id="transcript_upload_button", component_property="last_modified"),
-    State(component_id="modal_upload", component_property="is_open"))
-def update_transcripts(list_of_contents, modal_upload_input, list_of_names, list_of_dates, is_open):
-    if is_open == True:
-        return dash.no_update, False, ""
-
-    if list_of_contents is not None:
-        transcript = parse_contents(list_of_contents, list_of_names, list_of_dates)
-        
-        transcript["Time"] = transcript["Time"].str.replace("60", "59")
-        calculate_timestamps(transcript)
-        
-        transcripts.append(transcript)
-        transcript_files.append(list_of_names)
-
-        index = len(list_of_names) - list_of_names.find(".",(len(list_of_names)-5))
-        output_name = list_of_names[:-index] + " is now available in the Dropdown Menue"
-        return [{"label": transcript_files[i], "value": i} for i in range(len(transcript_files))], True, output_name
-
-    return [{"label": transcript_files[i], "value": i} for i in range(len(transcript_files))], False, ""
-
-
-
-
-
 
 # @app.callback(
 #     Output(component_id="keyword_table", component_property="children"),
