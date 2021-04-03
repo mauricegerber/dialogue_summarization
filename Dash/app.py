@@ -131,7 +131,7 @@ app.layout = dbc.Container(
                                         [
                                             dbc.Col(
                                                 [
-                                                    html.H5("Select speaker"),
+                                                    html.H5("Speakers"),
                                                     dbc.Checklist(
                                                         id="speaker_selector",
                                                         options=[{"label": i, "value": i}
@@ -144,7 +144,7 @@ app.layout = dbc.Container(
                                             ),
                                             dbc.Col(
                                                 [
-                                                    html.H5("Select time"),
+                                                    html.H5("Timeline"),
                                                     dbc.Row(
                                                         [
                                                             dbc.Col(
@@ -209,7 +209,6 @@ app.layout = dbc.Container(
                                                             {"name": "Utterance", "id": "Utterance", "presentation": "markdown"}
                                                         ],
                                                         data=initial_transcript[["Speaker", "Time", "Utterance"]].to_dict("records"),
-                                                        style_table={"height": "600px", "max-height": "600px"},
                                                         style_data_conditional=[
                                                             {"if": {"state": "selected"},
                                                              "background-color": "white",
@@ -223,19 +222,25 @@ app.layout = dbc.Container(
                                                             "border": "none",
                                                         },
                                                         style_cell_conditional=[
-                                                            # real column widths in browser view differ slightly from these values
+                                                            # real column widths in browser differ from these values
+                                                            # these values provide best ratio between columns widths
                                                             {"if": {"column_id": "Speaker"},
-                                                             "width": "80px"},
+                                                             "width": "30px"},
                                                             {"if": {"column_id": "Time"},
-                                                             "width": "80px"},
+                                                             "width": "30px"},
                                                             {"if": {"column_id": "Utterance"},
-                                                             "width": "900px"},
+                                                             "width": "800px"},
                                                         ],
                                                         style_cell={
                                                             "white-space": "normal", # required for line breaks in utterance column
                                                             "padding": "15px",
                                                             "border": "1px solid #e9e9e9",   
                                                         },
+                                                        css=[
+                                                            # sum of absolute elements 30+38+30+52+15+38+15+90(variable)+15...+30+21+15
+                                                            {"selector": ".dash-freeze-top",
+                                                             "rule": "max-height: calc(100vh - 389px)"},
+                                                            ],
                                                         fixed_rows={"headers": True},
                                                         page_action="none",
                                                     ),
@@ -332,12 +337,22 @@ app.layout = dbc.Container(
                 ),
             ],
         ),
+        html.Div(style={"height": "30px"}),
+        html.Footer(
+            id="footer",
+            children=[
+                html.Div("Pascal Aigner, Maurice Gerber, Basil Rohr | "),
+                html.Div("ZHAW Zurich University of Applied Sciences | "),
+                html.A("GitHub", href="https://github.com/pascalaigner/summarization", target="_blank"),
+            ],
+        ),
     ],
     fluid=True,
 )
 
 @app.callback(
     Output(component_id="transcript_table", component_property="data"),
+    Output(component_id="transcript_table", component_property="css"),
     Output(component_id="speaker_selector", component_property="options"),
     Output(component_id="speaker_selector", component_property="value"),
     Output(component_id="start_time_input", component_property="value"),
@@ -369,8 +384,19 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
     if trigger == "transcript_selector.value":
         speakers = transcript["Speaker"].unique()
         transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
+
+        # set height of transcript table depending on height of filter section
+        if len(speakers) == 2:
+            filter_section_height = 73
+        elif len(speakers) == 3:
+            filter_section_height = 90
+        else:
+            filter_section_height = 90 + (len(speakers)-3) * 21
+        transcript_table_height = 30+38+30+52+15+38+15+filter_section_height+15+30+21+15
+        css_code = "max-height: calc(100vh - " + str(transcript_table_height) + "px)"
         
-        return (transcript_table, [{"label": i, "value": i} for i in sorted(speakers, key=str.lower)], speakers,
+        return (transcript_table, [{"selector": ".dash-freeze-top", "rule": css_code}],
+                [{"label": i, "value": i} for i in sorted(speakers, key=str.lower)], speakers,
                 "00:00", time.strftime("%H:%M", time.gmtime(timeline_max)),
                 timeline_min, timeline_max, [timeline_min, timeline_max], marks, None)
     
@@ -404,7 +430,7 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
                 transcript = transcript[transcript["Timestamp"] <= timeline_slider_values[1]]
                 transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
 
-                return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+                return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
                         dash.no_update, dash.no_update, timeline_slider_values, dash.no_update, dash.no_update)
             except:
                 pass
@@ -413,12 +439,12 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
         transcript = transcript[transcript["Timestamp"] <= selected_timeline[1]]
         transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
 
-        return (transcript_table, dash.no_update, dash.no_update,
+        return (transcript_table, dash.no_update, dash.no_update, dash.no_update,
                 time.strftime("%H:%M", time.gmtime(selected_timeline[0])),
                 time.strftime("%H:%M", time.gmtime(selected_timeline[1])),
                 dash.no_update, dash.no_update, dash.no_update, marks, dash.no_update)
 
-    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
             dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
 
 @app.callback(

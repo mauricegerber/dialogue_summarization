@@ -79,3 +79,12 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 }
+
+#footer {
+    position: absolute;
+    bottom: 15px;
+}
+
+#footer > div {
+    display: inline;
+}
