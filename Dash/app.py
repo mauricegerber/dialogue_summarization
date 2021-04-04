@@ -86,7 +86,6 @@ app.layout = dbc.Container(
                                 dbc.Button(
                                     "Upload",
                                     className="btn-outline-primary",
-                                    style={"width": "100%"},
                                 ),
                             ],
                         ),
@@ -105,7 +104,7 @@ app.layout = dbc.Container(
                             ],
                         ),
                     ],
-                    width=1,
+                    width="auto",
                 ),
                 dbc.Col(
                     [
@@ -113,13 +112,11 @@ app.layout = dbc.Container(
                             "Delete",
                             id="transcript_delete_button",
                             className="btn-outline-primary",
-                            style={"width": "100%"},
                         ),
                     ],
-                    width=1,
+                    width="auto",
                 ),
             ],
-            align="center",
         ),
         html.Div(style={"height": vertical_space}),
         dbc.Row(
@@ -192,7 +189,7 @@ app.layout = dbc.Container(
                                                     dbc.Input(
                                                         id="search_input",
                                                         type="text",
-                                                        placeholder="Enter search term here",
+                                                        placeholder="Enter search term",
                                                     ),
                                                 ],
                                                 width="auto",
@@ -200,138 +197,181 @@ app.layout = dbc.Container(
                                         ],
                                     ),
                                     html.Div(style={"height": vertical_space}),
-                                    dbc.Row(
-                                        [
-                                            dbc.Col(
-                                                [
-                                                    dash_table.DataTable(
-                                                        id="transcript_table",
-                                                        columns=[
-                                                            {"name": "Speaker", "id": "Speaker", "presentation": "markdown"},
-                                                            {"name": "Time", "id": "Time", "presentation": "markdown"},
-                                                            {"name": "Utterance", "id": "Utterance", "presentation": "markdown"}
-                                                        ],
-                                                        data=initial_transcript[["Speaker", "Time", "Utterance"]].to_dict("records"),
-                                                        style_data_conditional=[
-                                                            {"if": {"state": "selected"},
-                                                             "background-color": "white",
-                                                             "border": "1px solid #e9e9e9"},
-                                                        ],
-                                                        style_header={
-                                                            "text-align": "left",
-                                                            "font-family": "sans-serif",
-                                                            "font-size": "13px",
-                                                            "background-color": "#f7f7f9",
-                                                            "border": "none",
-                                                        },
-                                                        style_cell_conditional=[
-                                                            # real column widths in browser differ from these values
-                                                            # these values provide best ratio between columns widths
-                                                            {"if": {"column_id": "Speaker"},
-                                                             "width": "30px"},
-                                                            {"if": {"column_id": "Time"},
-                                                             "width": "30px"},
-                                                            {"if": {"column_id": "Utterance"},
-                                                             "width": "800px"},
-                                                        ],
-                                                        style_cell={
-                                                            "white-space": "normal", # required for line breaks in utterance column
-                                                            "padding": "15px",
-                                                            "border": "1px solid #e9e9e9",   
-                                                        },
-                                                        css=[
-                                                            # sum of absolute elements 30+38+30+52+15+38+15+90(variable)+15...+30+21+15
-                                                            {"selector": ".dash-freeze-top",
-                                                             "rule": "max-height: calc(100vh - 389px)"},
-                                                            ],
-                                                        fixed_rows={"headers": True},
-                                                        page_action="none",
-                                                    ),
-                                                ],
-                                            ),
+                                    dash_table.DataTable(
+                                        id="transcript_table",
+                                        columns=[
+                                            {"name": "Speaker", "id": "Speaker", "presentation": "markdown"},
+                                            {"name": "Time", "id": "Time", "presentation": "markdown"},
+                                            {"name": "Utterance", "id": "Utterance", "presentation": "markdown"}
                                         ],
+                                        data=initial_transcript[["Speaker", "Time", "Utterance"]].to_dict("records"),
+                                        style_data_conditional=[
+                                            {"if": {"state": "selected"},
+                                                "background-color": "white",
+                                                "border": "1px solid #e9e9e9"},
+                                        ],
+                                        style_header={
+                                            "text-align": "left",
+                                            "font-family": "sans-serif",
+                                            "font-size": "13px",
+                                            "background-color": "#f7f7f9",
+                                            "border": "none",
+                                        },
+                                        style_cell_conditional=[
+                                            # real column widths in browser differ from these values
+                                            # these values provide best ratio between columns widths
+                                            {"if": {"column_id": "Speaker"},
+                                                "width": "30px"},
+                                            {"if": {"column_id": "Time"},
+                                                "width": "30px"},
+                                            {"if": {"column_id": "Utterance"},
+                                                "width": "800px"},
+                                        ],
+                                        style_cell={
+                                            "white-space": "normal", # required for line breaks in utterance column
+                                            "padding": "15px",
+                                            "border": "1px solid #e9e9e9",   
+                                        },
+                                        css=[
+                                            # sum of absolute elements 30+38+30+52+15+38+15+90(variable)+15...+30+21+15
+                                            {"selector": ".dash-freeze-top",
+                                                "rule": "max-height: calc(100vh - 389px)"},
+                                            ],
+                                        fixed_rows={"headers": True},
+                                        page_action="none",
                                     ),
                                 ],
                                 ),
                                 dbc.Tab(label="Keywords", children=[
+                                    html.Div(style={"height": vertical_space}),
                                     dbc.Row(
                                         [
                                             dbc.Col(
                                                 [
-                                                    html.Br(),
-                                                    dbc.Button("Apply", id="apply_texttiling_settings"),
+                                                    html.H5("Language"),
+                                                    dbc.RadioItems(
+                                                        id="language_radio_button",
+                                                        options=[
+                                                            {"label": "English", "value": "english"},
+                                                            {"label": "German", "value": "german"},
+                                                        ],
+                                                        value="english",
+                                                    ),
                                                 ],
-                                                width=1,
+                                                width="auto",
                                             ),
                                             dbc.Col(
                                                 [
-                                                    html.Br(),
+                                                    html.H5("Preprocessing"),
+                                                    dbc.Checklist(
+                                                        id="preprocessing_selector",
+                                                        options=[
+                                                            {"label": "Remove stopwords", "value": "stopwords"},
+                                                            {"label": "Apply stemming", "value": "stemming"},
+                                                        ],
+                                                        value=["stopwords", "stemming"],
+                                                    ),
+                                                ],
+                                                width="auto",
+                                            ),
+                                            dbc.Col(
+                                                [
                                                     html.H5("Additional stopwords"),
                                                     dbc.Input(
                                                         id="stopwords_input",
                                                         type="text",
-                                                        placeholder="Enter additional stopwords here (comma-separated)",
+                                                        placeholder="Enter stopwords separated by comma",
                                                     ),
                                                 ],
-                                                width=4,
                                             ),
                                             dbc.Col(
                                                 [
-                                                    html.Br(),
-                                                    html.H5("Change parameters"),
+                                                    html.H5("Parameters"),
                                                     dbc.Row(
                                                         [
                                                             dbc.Col(
                                                                 [
-                                                                    html.P("Pseudosentence length (10-30)"),
+                                                                    html.Div("Pseudosentence length"),
+                                                                    html.Div("(10 to 30 words)"),
                                                                 ],
-                                                                #width=8,
+                                                                width="auto",
+                                                            ),
+                                                            dbc.Col(
+                                                                [
+                                                                    dbc.Input(
+                                                                        id="pseudosentence_length_input",
+                                                                        type="number",
+                                                                        min=10,
+                                                                        max=30,
+                                                                        step=1,
+                                                                        value=20,
+                                                                    ),
+                                                                ],
+                                                                width="auto",
+                                                            ),
+                                                            dbc.Col(
+                                                                [
+                                                                    html.Div("Block comparison window size"),
+                                                                    html.Div("(10 to 30 pseudosentences)"),
+                                                                ],
+                                                                width="auto",
                                                             ),
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
                                                                         id="window_size_input",
                                                                         type="number",
-                                                                        min=5,
-                                                                        max=20,
+                                                                        min=10,
+                                                                        max=30,
                                                                         step=1,
                                                                         value=10,
                                                                     ),
                                                                 ],
-                                                                #width=4,
-                                                            ),                       
-                                                        ],
-                                                    ),
-                                                    dbc.Row(
-                                                        [
+                                                                width="auto",
+                                                            ),
                                                             dbc.Col(
                                                                 [
-                                                                    html.P("Window size (10-30)"),
+                                                                    html.Div("Cut-off"),
+                                                                    html.Div("(y-axis)"),
                                                                 ],
-                                                                #width=8,
+                                                                width="auto",
                                                             ),
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
-                                                                        id="window_size_input2",
+                                                                        id="cutoff_input",
                                                                         type="number",
-                                                                        min=5,
-                                                                        max=20,
-                                                                        step=1,
-                                                                        value=10,
+                                                                        min=0,
+                                                                        max=1,
+                                                                        step=0.01,
+                                                                        value=0.5,
                                                                     ),
                                                                 ],
-                                                                #width=4,
-                                                            ),                       
+                                                                width="auto",
+                                                            ),
                                                         ],
                                                     ),
-                                                    html.Br(),
                                                 ],
-                                                width=2,
+                                                width="auto",
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    html.Div(style={"height": "27px"}),
+                                                    dbc.Button(
+                                                        "Apply",
+                                                        id="apply_texttiling_settings",
+                                                        className="btn-outline-primary",
+                                                    ),
+                                                ],
+                                                width="auto",
                                             ),
                                         ],
-                                    ),  
-                                    dcc.Graph(id="keywords_plot", figure={}, config={"displayModeBar": False}),      
+                                    ),
+                                    html.Div(style={"height": vertical_space}),
+                                    dcc.Graph(id="keywords_plot", figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                    config={"displayModeBar": False}),
+                                    html.Div(id="boundaries_output", children=[]),
+
                                 ],
                                 ),
                             ],
@@ -391,8 +431,8 @@ def upload_and_delete_transcripts(list_of_contents, n_clicks_delete, n_clicks_mo
                 transcripts.append(transcript)
                 transcript_files.append(list_of_names)
 
-                return ([{"label": transcript_files[i], "value": str(i)} for i in range(len(transcript_files))], dash.no_update,
-                        True, "Upload successful", list_of_names + " is now available in the dropdown menu.")
+                return ([{"label": transcript_files[i], "value": str(i)} for i in range(len(transcript_files))],
+                        str(len(transcripts)-1), False, dash.no_update, dash.no_update)
 
             except Exception as e:
                 return dash.no_update, dash.no_update, True, "An error occurred", str(e)
@@ -401,8 +441,8 @@ def upload_and_delete_transcripts(list_of_contents, n_clicks_delete, n_clicks_mo
         if len(transcript_files) > 1:
             transcript_files.pop(int(current_transcript))
             transcripts.pop(int(current_transcript))
-            return ([{"label": transcript_files[i], "value": str(i)} for i in range(len(transcript_files))], "0",
-                    False, dash.no_update, dash.no_update)
+            return ([{"label": transcript_files[i], "value": str(i)} for i in range(len(transcript_files))],
+                    "0", False, dash.no_update, dash.no_update)
         else:
             return dash.no_update, dash.no_update, True, "An error occurred", "App must at least contain one transcript."
  
@@ -508,29 +548,60 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
 
 @app.callback(
     Output(component_id="keywords_plot", component_property="figure"),
+    Output(component_id="boundaries_output", component_property="children"),
     Input(component_id="apply_texttiling_settings", component_property="n_clicks"),
     State(component_id="transcript_selector", component_property="value"),
+    State(component_id="language_radio_button", component_property="value"),
+    State(component_id="preprocessing_selector", component_property="value"),
     State(component_id="stopwords_input", component_property="value"),
+    State(component_id="pseudosentence_length_input", component_property="value"),
+    State(component_id="window_size_input", component_property="value"),
+    State(component_id="cutoff_input", component_property="value"),
 )
-def create_keywords_plot(n_clicks, selected_transcript, additional_stopwords):
-    transcript = transcripts[int(selected_transcript)]
-    
-    additional_stopwords_list = []
-    if additional_stopwords != None:
-        additional_stopwords_list = additional_stopwords.split(",")
-    sw = set(stopwords.words("english") + additional_stopwords_list)
+def create_keywords_plot(n_clicks, selected_transcript, selected_language, selected_preprocessing,
+                         additional_stopwords, pseudosentence_length, window_size, cutoff):
+    if dash.callback_context.triggered[0]["prop_id"] == "apply_texttiling_settings.n_clicks":
+        transcript = transcripts[int(selected_transcript)]
 
-    boundaries, depth_scores = texttiling.texttiling(transcript, sw)
+        # print(selected_language)
+        # print(selected_preprocessing)
+        # print(additional_stopwords)
+        # print(pseudosentence_length)
+        # print(window_size)
+        # print(cutoff)
+        
+        if "stopwords" in selected_preprocessing:
+            #print("stopwords activated")
+            additional_stopwords_list = []
+            if additional_stopwords != None:
+                additional_stopwords_list = additional_stopwords.split(",")
+            sw = set(stopwords.words(selected_language) + additional_stopwords_list)
+        else:
+            #print("stopwords deactivated")
+            sw = []
 
-    fig = go.Figure()
+        if "stemming" in selected_preprocessing:
+            #print("stemming activated")
+            stemming = True
+        else:
+            #print("stemming deactivated")
+            stemming = False
 
-    fig.add_trace(go.Scatter(
-        x=list(range(len(depth_scores))),
-        y=depth_scores,
-        mode="lines"
-    ))
+        boundaries, depth_scores = texttiling.texttiling(transcript, sw, stemming, pseudosentence_length,
+                                                         window_size, cutoff)
 
-    return fig
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(
+            x=list(range(len(depth_scores))),
+            y=depth_scores,
+            mode="lines"
+        ))
+        fig["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})
+
+        return fig, str([transcript["Time"][i] for i in boundaries])
+
+    return dash.no_update, dash.no_update
 
 # @app.callback(
 #     Output(component_id="keyword_table", component_property="children"),
