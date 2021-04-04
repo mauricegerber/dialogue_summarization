@@ -43,7 +43,7 @@ def calculate_timestamps(transcript):
 
 transcripts_dir = "./transcripts/"
 transcript_files = os.listdir(transcripts_dir)
-initial_transcript_index = 1
+initial_transcript_index = 0
 
 transcripts = []
 for file in transcript_files:
@@ -72,8 +72,8 @@ app.layout = dbc.Container(
                     [
                         dbc.Select(
                             id="transcript_selector",
-                            options=[{"label": transcript_files[i], "value": i} for i in range(len(transcript_files))],
-                            value=initial_transcript_index,
+                            options=[{"label": transcript_files[i], "value": str(i)} for i in range(len(transcript_files))],
+                            value=str(initial_transcript_index),
                         ),
                     ],
                     width=3,
@@ -91,7 +91,7 @@ app.layout = dbc.Container(
                             ],
                         ),
                         dbc.Modal(
-                            id="upload_modal",
+                            id="modal",
                             children=[
                                 dbc.ModalHeader(id="modal_header", children=[]),
                                 dbc.ModalBody(id="modal_body", children=[]),
@@ -355,47 +355,59 @@ app.layout = dbc.Container(
 
 @app.callback(
     Output(component_id="transcript_selector", component_property="options"),
-    Output(component_id="upload_modal", component_property="is_open"),
+    Output(component_id="transcript_selector", component_property="value"),
+    Output(component_id="modal", component_property="is_open"),
     Output(component_id="modal_header", component_property="children"),
     Output(component_id="modal_body", component_property="children"),
     Input(component_id="transcript_upload_button", component_property="contents"),
+    Input(component_id="transcript_delete_button", component_property="n_clicks"),
     Input(component_id="modal_close_button", component_property="n_clicks"),
+    State(component_id="transcript_selector", component_property="value"),
     State(component_id="transcript_upload_button", component_property="filename"),
-    State(component_id="upload_modal", component_property="is_open"),
+    State(component_id="modal", component_property="is_open"),
 )
-def upload_transcripts(list_of_contents, n_clicks, list_of_names, is_open):
-    if is_open == True:
-        return dash.no_update, False, dash.no_update, dash.no_update
+def upload_and_delete_transcripts(list_of_contents, n_clicks_delete, n_clicks_modal,
+                                  current_transcript, list_of_names, is_open):
+    if is_open:
+        return dash.no_update, dash.no_update, False, dash.no_update, dash.no_update
 
-    if list_of_contents is not None:
-        content_type, content_string = list_of_contents.split(",")
-        decoded = base64.b64decode(content_string)
+    trigger = dash.callback_context.triggered[0]["prop_id"]
 
-        # catch errors while reading the file, e.g. uploaded file is not a csv
-        try:
-            transcript = pd.read_csv(
-                filepath_or_buffer=io.StringIO(decoded.decode("utf-8")),
-                header=0,
-                names=["Speaker", "Time", "End time", "Duration", "Utterance"],
-                usecols=["Speaker", "Time", "Utterance"]
-            )
-            modal_header_text = "Upload successful"
-            modal_body_text = list_of_names + " is now available in the dropdown menu."
-        except Exception as e:
-            return dash.no_update, True, "Error while reading the file", str(e)
-        
-        # catch errors while processing the file, e.g. string cannot be converted to datetime object
-        try:
-            transcript["Time"] = transcript["Time"].str.replace("60", "59")
-            calculate_timestamps(transcript)
-            transcripts.append(transcript)
-            transcript_files.append(list_of_names)
-            return ([{"label": transcript_files[i], "value": i} for i in range(len(transcript_files))],
-                    True, modal_header_text, modal_body_text)
-        except Exception as e:
-            return dash.no_update, True, "Error while processing the file", str(e)
-            
-    return [{"label": transcript_files[i], "value": i} for i in range(len(transcript_files))], False, dash.no_update, dash.no_update
+    if trigger == "transcript_upload_button.contents":
+
+        if list_of_contents is not None:
+            content_type, content_string = list_of_contents.split(",")
+            decoded = base64.b64decode(content_string)
+
+            try:
+                transcript = pd.read_csv(
+                    filepath_or_buffer=io.StringIO(decoded.decode("utf-8")),
+                    header=0,
+                    names=["Speaker", "Time", "End time", "Duration", "Utterance"],
+                    usecols=["Speaker", "Time", "Utterance"]
+                )
+                transcript["Time"] = transcript["Time"].str.replace("60", "59")
+                calculate_timestamps(transcript)
+                transcripts.append(transcript)
+                transcript_files.append(list_of_names)
+
+                return ([{"label": transcript_files[i], "value": str(i)} for i in range(len(transcript_files))], dash.no_update,
+                        True, "Upload successful", list_of_names + " is now available in the dropdown menu.")
+
+            except Exception as e:
+                return dash.no_update, dash.no_update, True, "An error occurred", str(e)
+
+    if trigger == "transcript_delete_button.n_clicks":
+        if len(transcript_files) > 1:
+            transcript_files.pop(int(current_transcript))
+            transcripts.pop(int(current_transcript))
+            return ([{"label": transcript_files[i], "value": str(i)} for i in range(len(transcript_files))], "0",
+                    False, dash.no_update, dash.no_update)
+        else:
+            return dash.no_update, dash.no_update, True, "An error occurred", "App must at least contain one transcript."
+ 
+    return ([{"label": transcript_files[i], "value": str(i)} for i in range(len(transcript_files))],
+            dash.no_update, False, dash.no_update, dash.no_update)
 
 @app.callback(
     Output(component_id="transcript_table", component_property="data"),
@@ -418,7 +430,7 @@ def upload_transcripts(list_of_contents, n_clicks, list_of_names, is_open):
 )
 def update_transcript_table_and_filters(selected_transcript, selected_speaker, selected_start_time,
                                         selected_end_time, selected_timeline, search_term):
-    transcript = transcripts[int(selected_transcript)] # selected_transcript is str, must be int
+    transcript = transcripts[int(selected_transcript)]
 
     timeline_min = transcript["Timestamp"][0]
     timeline_max = transcript["Timestamp"][len(transcript)-1]
