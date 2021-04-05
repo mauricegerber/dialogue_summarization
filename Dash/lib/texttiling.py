@@ -5,7 +5,7 @@ from nltk.stem import PorterStemmer
 
 # based on https://www.nltk.org/_modules/nltk/tokenize/texttiling.html
 
-def texttiling(transcript, stopwords, stemming, w, k, cutoff, min_boundary_distance=10):
+def texttiling(transcript, stopwords, stemming, w, k, cutoff, min_boundary_distance=20):
 
     class TokenSequence(object):
         def __init__(self, index, word_list):

@@ -312,7 +312,7 @@ app.layout = dbc.Container(
                                                             dbc.Col(
                                                                 [
                                                                     html.Div("Block comparison window size"),
-                                                                    html.Div("(10 to 30 pseudosentences)"),
+                                                                    html.Div("(5 to 30 pseudosentences)"),
                                                                 ],
                                                                 width="auto",
                                                             ),
@@ -321,7 +321,7 @@ app.layout = dbc.Container(
                                                                     dbc.Input(
                                                                         id="window_size_input",
                                                                         type="number",
-                                                                        min=10,
+                                                                        min=5,
                                                                         max=30,
                                                                         step=1,
                                                                         value=10,
