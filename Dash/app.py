@@ -20,6 +20,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from nltk.corpus import stopwords
+from keybert import KeyBERT
+kw_extractor = KeyBERT('distilbert-base-nli-mean-tokens')
 
 sys.path.insert(0, "./lib")
 import texttiling
@@ -30,30 +32,40 @@ app = dash.Dash(external_stylesheets=[BS])
 app.title = "Dialog Analyzer"
 
 def calculate_timestamps(transcript):
-    first_timestamp = datetime.strptime("0:00", "%M:%S")
-    timestamps = []
+    ft = datetime.strptime("00:00:00", "%H:%M:%S")
+    timestamps_hms = []
+    timestamps_s = []
+    # time column comes in format %M:%S and minutes can exceed 59
+    # e.g. a time of 65:46 corresponds to 01:05:46 in regular %H:%M:%S format
+    # therefore, time conversion is a bit cumbersome
     for t in transcript["Time"]:
-        if len(t) <= 5:
-            current_timestamp = datetime.strptime(t, "%M:%S")
-            timestamps.append(int((current_timestamp - first_timestamp).total_seconds()))
+        t = t.split(":")
+        h = math.floor(int(t[0]) / 60)
+        m = int(t[0]) % 60
+        s = t[1]
+        if s == "60": s = "59" # seconds can have a value of 60 which would non-convertible
+        hms = ":".join([str(h), str(m), s])
+        ct = datetime.strptime(hms, "%H:%M:%S")
+        if ct.hour == 0:
+            timestamps_hms.append("{:02d}:{:02d}".format(ct.minute, ct.second))
         else:
-            current_timestamp = datetime.strptime(t, "%H:%M:%S")
-            timestamps.append(int((current_timestamp - first_timestamp).total_seconds()))
-    transcript["Timestamp"] = timestamps
+            timestamps_hms.append("{:02d}:{:02d}:{:02d}".format(ct.hour, ct.minute, ct.second))
+        timestamps_s.append(int((ct - ft).total_seconds()))
+    transcript["Time"] = timestamps_hms
+    transcript["Timestamp"] = timestamps_s
 
 transcripts_dir = "./transcripts/"
 transcript_files = os.listdir(transcripts_dir)
 initial_transcript_index = 0
 
 transcripts = []
-for file in transcript_files:
+for f in transcript_files:
     transcript = pd.read_csv(
-        filepath_or_buffer=transcripts_dir + file,
+        filepath_or_buffer=transcripts_dir + f,
         header=0,
         names=["Speaker", "Time", "End time", "Duration", "Utterance"],
         usecols=["Speaker", "Time", "Utterance"]
     )
-    transcript["Time"] = transcript["Time"].str.replace("60", "59")
     calculate_timestamps(transcript)
     transcripts.append(transcript)
 
@@ -344,7 +356,7 @@ app.layout = dbc.Container(
                                                                         min=0,
                                                                         max=1,
                                                                         step=0.01,
-                                                                        value=0.5,
+                                                                        value=0.45,
                                                                     ),
                                                                 ],
                                                                 width="auto",
@@ -368,10 +380,45 @@ app.layout = dbc.Container(
                                         ],
                                     ),
                                     html.Div(style={"height": vertical_space}),
-                                    dcc.Graph(id="keywords_plot", figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
-                                    config={"displayModeBar": False}),
-                                    html.Div(id="boundaries_output", children=[]),
-
+                                    dcc.Graph(
+                                        id="keywords_plot",
+                                        figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                        config={"displayModeBar": False},
+                                        style={"height": "300px"},
+                                    ),
+                                    html.Div(style={"height": vertical_space}),
+                                    dash_table.DataTable(
+                                        id="keywords_table",
+                                        columns=[
+                                            {"name": "Start time", "id": "Start time", "presentation": "markdown"},
+                                            {"name": "Keywords", "id": "Keywords", "presentation": "markdown"},
+                                        ],
+                                        style_data_conditional=[
+                                            {"if": {"state": "selected"},
+                                                "background-color": "white",
+                                                "border": "1px solid #e9e9e9"},
+                                        ],
+                                        style_header={
+                                            "text-align": "left",
+                                            "font-family": "sans-serif",
+                                            "font-size": "13px",
+                                            "background-color": "#f7f7f9",
+                                            "border": "none",
+                                        },
+                                        style_cell={
+                                            "font-family": "sans-serif",
+                                            "white-space": "normal", # required for line breaks in utterance column
+                                            "padding": "15px",
+                                            "border": "1px solid #e9e9e9",   
+                                        },
+                                        css=[
+                                            # sum of absolute elements 30+38+30+52+15+38+15+72+15+300+15...+30+21+15
+                                            {"selector": ".dash-freeze-top",
+                                                "rule": "max-height: calc(100vh - 671px)"},
+                                            ],
+                                        fixed_rows={"headers": True},
+                                        page_action="none",
+                                    ),
                                 ],
                                 ),
                             ],
@@ -426,7 +473,6 @@ def upload_and_delete_transcripts(list_of_contents, n_clicks_delete, n_clicks_mo
                     names=["Speaker", "Time", "End time", "Duration", "Utterance"],
                     usecols=["Speaker", "Time", "Utterance"]
                 )
-                transcript["Time"] = transcript["Time"].str.replace("60", "59")
                 calculate_timestamps(transcript)
                 transcripts.append(transcript)
                 transcript_files.append(list_of_names)
@@ -518,7 +564,7 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
             # in Firefox the input field can be cleared by clicking the encircled X (which cannot be hidden)
             # this causes an error with the datetime conversion and is therefore handled as exception
             try:
-                first_timestamp = datetime.strptime("0:00", "%M:%S")
+                first_timestamp = datetime.strptime("00:00", "%M:%S")
                 current_start_time = datetime.strptime(selected_start_time, "%H:%M")
                 current_end_time = datetime.strptime(selected_end_time, "%H:%M")
                 # timeline_deviation is added to prevent last utterances from being filtered out
@@ -548,7 +594,7 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
 
 @app.callback(
     Output(component_id="keywords_plot", component_property="figure"),
-    Output(component_id="boundaries_output", component_property="children"),
+    Output(component_id="keywords_table", component_property="data"),
     Input(component_id="apply_texttiling_settings", component_property="n_clicks"),
     State(component_id="transcript_selector", component_property="value"),
     State(component_id="language_radio_button", component_property="value"),
@@ -571,20 +617,16 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language, selec
         # print(cutoff)
         
         if "stopwords" in selected_preprocessing:
-            #print("stopwords activated")
             additional_stopwords_list = []
             if additional_stopwords != None:
                 additional_stopwords_list = additional_stopwords.split(",")
             sw = set(stopwords.words(selected_language) + additional_stopwords_list)
         else:
-            #print("stopwords deactivated")
             sw = []
 
         if "stemming" in selected_preprocessing:
-            #print("stemming activated")
             stemming = True
         else:
-            #print("stemming deactivated")
             stemming = False
 
         boundaries, depth_scores = texttiling.texttiling(transcript, sw, stemming, pseudosentence_length,
@@ -599,7 +641,40 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language, selec
         ))
         fig["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})
 
-        return fig, str([transcript["Time"][i] for i in boundaries])
+        fig.update_layout(
+            xaxis_title="Gap between pseudosentences",
+            yaxis_title="Depth score",
+        )
+        
+        boundaries_timestamps = [transcript["Timestamp"][i+1] for i in boundaries]
+        boundaries_time = [transcript["Time"][i+1] for i in boundaries]
+        boundaries_timestamps.insert(0, 0)
+        boundaries_time.insert(0, "00:00")
+        boundaries_timestamps.append(transcript["Timestamp"][len(transcript)-1])
+        boundaries_time.append(transcript["Time"][len(transcript)-1])
+
+        keywords = []
+        for i in range(1, len(boundaries_timestamps)):
+            transcript_subset = transcript[transcript["Timestamp"] < boundaries_timestamps[i]]
+            transcript_subset = transcript_subset[transcript_subset["Timestamp"] >= boundaries_timestamps[i-1]]
+            text = ""
+            for utterance in transcript_subset["Utterance"].str.lower():
+                text += utterance
+            kws = kw_extractor.extract_keywords(text, stop_words = sw, diversity=1, use_mmr=True, keyphrase_ngram_range=(2,2))
+            kws = [w for w, v in kws]
+            keywords.append(", ".join(kws))
+
+
+        data = {"Start time": boundaries_time[:-1],
+                "Keywords": keywords}
+
+        keywords = pd.DataFrame(data = data)
+
+        keywords_table = keywords.to_dict("records")
+
+
+
+        return fig, keywords_table
 
     return dash.no_update, dash.no_update
 
