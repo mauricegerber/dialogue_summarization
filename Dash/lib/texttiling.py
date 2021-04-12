@@ -1,11 +1,9 @@
 import re
 import math
 
-from nltk.stem import PorterStemmer
-
 # based on https://www.nltk.org/_modules/nltk/tokenize/texttiling.html
 
-def texttiling(transcript, stopwords, stemming, w, k, cutoff, min_boundary_distance=20):
+def texttiling(transcript, stopwords, w, k, cutoff, min_boundary_distance=20):
 
     class TokenSequence(object):
         def __init__(self, index, word_list):
@@ -134,11 +132,6 @@ def texttiling(transcript, stopwords, stemming, w, k, cutoff, min_boundary_dista
 
     for ts in tokseqs:
         ts.word_list = [wi for wi in ts.word_list if wi[0] not in stopwords]
-
-    if stemming:
-        stemmer = PorterStemmer()
-        for ts in tokseqs:
-            ts.word_list = [(stemmer.stem(w), i) for w, i in ts.word_list]
 
     token_table = create_token_table(tokseqs)
 

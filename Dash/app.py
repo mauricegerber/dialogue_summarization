@@ -35,15 +35,14 @@ def calculate_timestamps(transcript):
     ft = datetime.strptime("00:00:00", "%H:%M:%S")
     timestamps_hms = []
     timestamps_s = []
-    # time column comes in format %M:%S and minutes can exceed 59
-    # e.g. a time of 65:46 corresponds to 01:05:46 in regular %H:%M:%S format
-    # therefore, time conversion is a bit cumbersome
+    # time column has format %M:%S and minutes can exceed 59
+    # e.g. time value of 65:46 corresponds to 01:05:46 in %H:%M:%S format
     for t in transcript["Time"]:
         t = t.split(":")
         h = math.floor(int(t[0]) / 60)
         m = int(t[0]) % 60
         s = t[1]
-        if s == "60": s = "59" # seconds can have a value of 60 which would non-convertible
+        if s == "60": s = "59" # seconds can have value of 60 which would be non-convertible
         hms = ":".join([str(h), str(m), s])
         ct = datetime.strptime(hms, "%H:%M:%S")
         if ct.hour == 0:
@@ -219,8 +218,8 @@ app.layout = dbc.Container(
                                         data=initial_transcript[["Speaker", "Time", "Utterance"]].to_dict("records"),
                                         style_data_conditional=[
                                             {"if": {"state": "selected"},
-                                                "background-color": "white",
-                                                "border": "1px solid #e9e9e9"},
+                                             "background-color": "white",
+                                             "border": "1px solid #e9e9e9"},
                                         ],
                                         style_header={
                                             "text-align": "left",
@@ -231,13 +230,13 @@ app.layout = dbc.Container(
                                         },
                                         style_cell_conditional=[
                                             # real column widths in browser differ from these values
-                                            # these values provide best ratio between columns widths
+                                            # these values provide good ratio between columns widths
                                             {"if": {"column_id": "Speaker"},
-                                                "width": "30px"},
+                                             "width": "30px"},
                                             {"if": {"column_id": "Time"},
-                                                "width": "30px"},
+                                             "width": "30px"},
                                             {"if": {"column_id": "Utterance"},
-                                                "width": "800px"},
+                                             "width": "800px"},
                                         ],
                                         style_cell={
                                             "white-space": "normal", # required for line breaks in utterance column
@@ -245,9 +244,9 @@ app.layout = dbc.Container(
                                             "border": "1px solid #e9e9e9",   
                                         },
                                         css=[
-                                            # sum of absolute elements 30+38+30+52+15+38+15+90(variable)+15...+30+21+15
+                                            # sum of absolute elements 30+38+30+52+15+38+15+72(variable)+15...+15+21+15
                                             {"selector": ".dash-freeze-top",
-                                                "rule": "max-height: calc(100vh - 389px)"},
+                                             "rule": "max-height: calc(100vh - 356px)"},
                                             ],
                                         fixed_rows={"headers": True},
                                         page_action="none",
@@ -274,27 +273,14 @@ app.layout = dbc.Container(
                                             ),
                                             dbc.Col(
                                                 [
-                                                    html.H5("Preprocessing"),
-                                                    dbc.Checklist(
-                                                        id="preprocessing_selector",
-                                                        options=[
-                                                            {"label": "Remove stopwords", "value": "stopwords"},
-                                                            {"label": "Apply stemming", "value": "stemming"},
-                                                        ],
-                                                        value=["stopwords", "stemming"],
-                                                    ),
-                                                ],
-                                                width="auto",
-                                            ),
-                                            dbc.Col(
-                                                [
                                                     html.H5("Additional stopwords"),
                                                     dbc.Input(
                                                         id="stopwords_input",
                                                         type="text",
-                                                        placeholder="Enter stopwords separated by comma",
+                                                        placeholder="Enter additional stopwords separated by comma",
                                                     ),
                                                 ],
+                                                width="auto",
                                             ),
                                             dbc.Col(
                                                 [
@@ -380,11 +366,16 @@ app.layout = dbc.Container(
                                         ],
                                     ),
                                     html.Div(style={"height": vertical_space}),
-                                    dcc.Graph(
-                                        id="keywords_plot",
-                                        figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
-                                        config={"displayModeBar": False},
-                                        style={"height": "300px"},
+                                    
+                                    dcc.Loading(
+                                        id="loading-1",
+                                        color="#1a1a1a",
+                                        children=[dcc.Graph(
+                                            id="keywords_plot",
+                                            figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                            config={"displayModeBar": False},
+                                            style={"height": "250px"},
+                                        )]
                                     ),
                                     html.Div(style={"height": vertical_space}),
                                     dash_table.DataTable(
@@ -414,7 +405,7 @@ app.layout = dbc.Container(
                                         css=[
                                             # sum of absolute elements 30+38+30+52+15+38+15+72+15+300+15...+30+21+15
                                             {"selector": ".dash-freeze-top",
-                                                "rule": "max-height: calc(100vh - 671px)"},
+                                                "rule": "max-height: calc(100vh - 621px)"},
                                             ],
                                         fixed_rows={"headers": True},
                                         page_action="none",
@@ -427,7 +418,7 @@ app.layout = dbc.Container(
                 ),
             ],
         ),
-        html.Div(style={"height": "30px"}),
+        html.Div(style={"height": vertical_space}),
         html.Footer(
             id="footer",
             children=[
@@ -537,7 +528,7 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
             filter_section_height = 90
         else:
             filter_section_height = 90 + (len(speakers)-3) * 21
-        transcript_table_height = 30+38+30+52+15+38+15+filter_section_height+15+30+21+15
+        transcript_table_height = 30+38+30+52+15+38+15+filter_section_height+15+15+21+15
         css_code = "max-height: calc(100vh - " + str(transcript_table_height) + "px)"
         
         return (transcript_table, [{"selector": ".dash-freeze-top", "rule": css_code}],
@@ -598,13 +589,12 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
     Input(component_id="apply_texttiling_settings", component_property="n_clicks"),
     State(component_id="transcript_selector", component_property="value"),
     State(component_id="language_radio_button", component_property="value"),
-    State(component_id="preprocessing_selector", component_property="value"),
     State(component_id="stopwords_input", component_property="value"),
     State(component_id="pseudosentence_length_input", component_property="value"),
     State(component_id="window_size_input", component_property="value"),
     State(component_id="cutoff_input", component_property="value"),
 )
-def create_keywords_plot(n_clicks, selected_transcript, selected_language, selected_preprocessing,
+def create_keywords_plot(n_clicks, selected_transcript, selected_language,
                          additional_stopwords, pseudosentence_length, window_size, cutoff):
     if dash.callback_context.triggered[0]["prop_id"] == "apply_texttiling_settings.n_clicks":
         transcript = transcripts[int(selected_transcript)]
@@ -616,20 +606,12 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language, selec
         # print(window_size)
         # print(cutoff)
         
-        if "stopwords" in selected_preprocessing:
-            additional_stopwords_list = []
-            if additional_stopwords != None:
-                additional_stopwords_list = additional_stopwords.split(",")
-            sw = set(stopwords.words(selected_language) + additional_stopwords_list)
-        else:
-            sw = []
+        additional_stopwords_list = []
+        if additional_stopwords != None:
+            additional_stopwords_list = additional_stopwords.split(",")
+        sw = set(stopwords.words(selected_language) + additional_stopwords_list)
 
-        if "stemming" in selected_preprocessing:
-            stemming = True
-        else:
-            stemming = False
-
-        boundaries, depth_scores = texttiling.texttiling(transcript, sw, stemming, pseudosentence_length,
+        boundaries, depth_scores = texttiling.texttiling(transcript, sw, pseudosentence_length,
                                                          window_size, cutoff)
 
         fig = go.Figure()
@@ -664,7 +646,6 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language, selec
             kws = [w for w, v in kws]
             keywords.append(", ".join(kws))
 
-
         data = {"Start time": boundaries_time[:-1],
                 "Keywords": keywords}
 
@@ -672,62 +653,9 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language, selec
 
         keywords_table = keywords.to_dict("records")
 
-
-
         return fig, keywords_table
 
     return dash.no_update, dash.no_update
-
-# @app.callback(
-#     Output(component_id="keyword_table", component_property="children"),
-#     Input(component_id="transcript_selector", component_property="value"),
-#     Input(component_id="keyword_extraction_apply_button", component_property="n_clicks"),
-#     State(component_id="keyword_extraction_method_selector", component_property="value"),
-# )
-# def extract_keywords(selected_transcript, n_clicks, selected_methods):
-#     transcript = pd.read_csv("./transcripts/" + selected_transcript)
-
-#     if dash.callback_context.triggered[0]["prop_id"] == "keyword_extraction_apply_button.n_clicks":
-
-#         if "textrank" in selected_methods:
-#             textrank_keywords = [None] * len(transcript)
-#             for i in range(len(transcript)):
-#                 try:
-#                     textrank_keywords[i] = keywords.keywords(transcript.text[i], words=3).replace("\n", ", ")
-#                 except:
-#                     textrank_keywords[i] = ""
-#             transcript["textrank"] = textrank_keywords
-
-#         # if "topicrank" in selected_methods:
-#         #     topicrank_keywords = [None] * len(transcript)
-#         #     for i in range(len(transcript)):
-#         #         try:
-#         #             topicrank_keywords[i] = ", ".join(TopicRank(transcript.text[i]).get_top_n(3))
-#         #         except:
-#         #             topicrank_keywords[i] = ""
-#         #     transcript["topicrank"] = topicrank_keywords
-
-#     transcript.drop(columns=["text"], inplace=True)
-#     return dbc.Table.from_dataframe(transcript, bordered=True, hover=True)
-
-# @app.callback(
-#     Output(component_id="speakers_ratio", component_property="figure"),
-#     Input(component_id="transcript_selector", component_property="value"),
-# )
-# def plot_speakers_ratio(selected_transcript):
-
-#     transcript = pd.read_csv("./transcripts/" + selected_transcript)
-
-#     transcript["word_count"] = 0
-#     for i in range(len(transcript)):
-#         transcript["word_count"][i] = len(transcript["text"][i].split())
-
-#     words_spoken = transcript.groupby(["speaker"]).sum()
-#     words_spoken.reset_index(inplace=True)
-
-#     fig = px.bar(words_spoken, x = "speaker", y = "word_count", title="Speaker ratio")
-    
-#     return fig
 
 if __name__ == "__main__":
     # context = ("/etc/letsencrypt/live/projects.pascalaigner.ch/cert.pem", "/etc/letsencrypt/live/projects.pascalaigner.ch/privkey.pem")
