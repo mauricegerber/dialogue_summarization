@@ -41,6 +41,9 @@ minutes = minutes[1:len(minutes)]
 
 counter = 0
 index_min = 0
+for i in range(min):
+    t = transcript[i,5]
+
 for t in transcript["Utterance"]:
     if counter < minutes[index_min]:
         counter += 1
