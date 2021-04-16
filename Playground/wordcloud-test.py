@@ -1,9 +1,11 @@
 import nltk
 import pandas as pd
 from nltk.corpus import stopwords, wordnet
-from wordcloud import WordCloud
+from wordcloud import (WordCloud, get_single_color_func)
 import matplotlib.pyplot as plt
 import datetime
+
+import random
 
 transcript = pd.read_csv(
     filepath_or_buffer="Playground\Vice presidential debate.csv",
@@ -18,13 +20,51 @@ transcript["Time"] = transcript["Time"].str.replace("60", "59")
 stop_words = set(stopwords.words("english"))
 stop_words |= set(["Thank", "Joe", "Biden", "Donald", "Trump", "America", "American", "President"])
 
+class GroupedColorFunc(object):
+    """Create a color function object which assigns DIFFERENT SHADES of
+       specified colors to certain words based on the color to words mapping.
+
+       Uses wordcloud.get_single_color_func
+
+       Parameters
+       ----------
+       color_to_words : dict(str -> list(str))
+         A dictionary that maps a color to the list of words.
+
+       default_color : str
+         Color that will be assigned to a word that's not a member
+         of any value from color_to_words.
+    """
+
+    def __init__(self, color_to_words, default_color):
+        self.color_func_to_words = [
+            (get_single_color_func(color), set(words))
+            for (color, words) in color_to_words.items()]
+
+        self.default_color_func = get_single_color_func(default_color)
+
+    def get_color_func(self, word):
+        """Returns a single_color_func associated with the word"""
+        try:
+            color_func = next(
+                color_func for (color_func, words) in self.color_func_to_words
+                if word in words)
+        except StopIteration:
+            color_func = self.default_color_func
+
+        return color_func
+
+    def __call__(self, word, **kwargs):
+        return self.get_color_func(word)(word, **kwargs)
+
+
 
 nrow = len(transcript.index)-1
 
 last_min = transcript.iloc[nrow, 1]
 l_min = int(last_min[0:2])
 
-steps = 5
+steps = 5 # Time steps adjustment in minutes
 minutes = range(0, l_min+steps, steps)
 minutes = minutes[1:]
 
@@ -38,42 +78,88 @@ def analyse_minute(timestamp):
     minute += int(timestamp[0:timestamp.find(":",0,len(timestamp))])
     return(minute)
 
+def compare_wordlist(text_old, text_new):
+    w_old = text_old.split()
+    w_new = text_new.split()
+    words_old = [x for x in w_old + w_new if x not in w_new]
+    words_new = [x for x in w_old + w_new if x not in w_old]
+    return words_old, words_new
+
+def create_wordcloud(text, words_old, words_new):
+    color_to_words = {
+        # words below will be colored with a green single color function
+        '#00ff00': words_new,
+        # will be colored with a red single color function
+        'red': words_old
+    }        
+    
+    default_color = "grey"
+    grouped_color_func = GroupedColorFunc(color_to_words, default_color)
+
+    wordcloud = WordCloud(stopwords=stop_words, collocations=False).generate(text)
+    wordcloud.recolor(color_func=grouped_color_func)
+
+    plt.figure(figsize=(15,10))
+    plt.clf()
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.show()
+
 
 text = ""
 index_min = 0
+text_old = ""
 for i in range(nrow+1):
     t = transcript.iloc[i]["Utterance"]
     min_count = analyse_minute(transcript.iloc[i]["Time"])
     
     if min_count < minutes[index_min]:
         text += " " + t
-      
 
     else:
         index_min += 1
+        co_wo = compare_wordlist(text_old, text)
         
-        wordcloud = WordCloud(stopwords=stop_words).generate(text)
-        plt.figure(figsize=(15,10))
-        plt.clf()
-        plt.imshow(wordcloud)
-        plt.show()
+        create_wordcloud(text, co_wo[0], co_wo[1])
+        text_old = text
         text = transcript.iloc[i]["Utterance"]
 
     if i == nrow:
-        wordcloud = WordCloud(stopwords=stop_words).generate(text)
-        plt.figure(figsize=(15,10))
-        plt.clf()
-        plt.imshow(wordcloud)
-        plt.show()
+        co_wo = compare_wordlist(text_old, text)
+        create_wordcloud(text, co_wo[1], co_wo[2])
+        
 
+# text = ""
+# for t in transcript[1:5]["Utterance"]:
+#     text += " " + t
+# print(type(text))
 
+# te = ""
+# a = text.split()
+# print(len(a))
 
+# a1 = te.split()
+# a2 = a
+# sswords = ["that", "is"]
+# words_old = [x for x in a1 + a2 if x not in a2 and x not in sswords]
+# words_new = [x for x in a1 + a2 if x not in a1 and x not in sswords]
 
+# print(words_old)
+# print(words_new)
 
+# color_to_words = {
+#         # words below will be colored with a green single color function
+#         '#00ff00': words_new,
+#         # will be colored with a red single color function
+#         'red': words_old
+#     }        
+    
+# default_color = "grey"
+# grouped_color_func = GroupedColorFunc(color_to_words, default_color)
 
-# wordcloud = WordCloud(stopwords=stop_words).generate(text)
+# wordcloud = WordCloud(stopwords=stop_words,collocations=False).generate(text)
+# wordcloud.recolor(color_func=grouped_color_func)
 
 # plt.figure(figsize=(15,10))
 # plt.clf()
-# plt.imshow(wordcloud)
+# plt.imshow(wordcloud, interpolation="bilinear")
 # plt.show()
