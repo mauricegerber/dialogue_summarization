@@ -96,12 +96,13 @@ def create_wordcloud(text, words_old, words_new):
     default_color = "grey"
     grouped_color_func = GroupedColorFunc(color_to_words, default_color)
 
-    wordcloud = WordCloud(stopwords=stop_words, collocations=False).generate(text)
+    wordcloud = WordCloud(stopwords=stop_words, collocations=False, max_words = 10).generate(text.lower())
     wordcloud.recolor(color_func=grouped_color_func)
 
     plt.figure(figsize=(15,10))
     plt.clf()
     plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis("off")
     plt.show()
 
 
