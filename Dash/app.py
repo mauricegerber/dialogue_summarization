@@ -253,7 +253,7 @@ app.layout = dbc.Container(
                                     ),
                                 ],
                                 ),
-                                dbc.Tab(label="Keywords", children=[
+                                dbc.Tab(label="Texttiling", children=[
                                     html.Div(style={"height": vertical_space}),
                                     dbc.Row(
                                         [
@@ -280,7 +280,7 @@ app.layout = dbc.Container(
                                                         placeholder="Enter additional stopwords separated by comma",
                                                     ),
                                                 ],
-                                                width="auto",
+                                                style={"margin": "0% 5% 0%"},
                                             ),
                                             dbc.Col(
                                                 [
@@ -351,6 +351,7 @@ app.layout = dbc.Container(
                                                     ),
                                                 ],
                                                 width="auto",
+                                                style={"margin": "0% 5% 0%"},
                                             ),
                                             dbc.Col(
                                                 [
