@@ -1,5 +1,5 @@
 /* set button height equal to height of input elements */
-.btn-outline-primary {
+.btn-outline-primary, .btn-outline-danger, .btn-secondary {
     height: 45px;
     line-height: 0;
 }

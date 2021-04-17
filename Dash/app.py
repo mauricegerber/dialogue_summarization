@@ -9,6 +9,7 @@ import io
 import re
 import math
 
+import flask
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -25,6 +26,11 @@ kw_extractor = KeyBERT('distilbert-base-nli-mean-tokens')
 
 sys.path.insert(0, "./lib")
 import texttiling
+import create_pdf
+
+# TO DO
+# erstellte PDF direkt nach neuem generieren löschen
+# Transkribtname in Dateiname
 
 # https://bootswatch.com/lux/
 BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/lux/bootstrap.min.css"
@@ -55,7 +61,7 @@ def calculate_timestamps(transcript):
 
 transcripts_dir = "./transcripts/"
 transcript_files = os.listdir(transcripts_dir)
-initial_transcript_index = 0
+initial_transcript_index = 1
 
 transcripts = []
 for f in transcript_files:
@@ -124,6 +130,34 @@ app.layout = dbc.Container(
                             id="transcript_delete_button",
                             className="btn-outline-primary",
                         ),
+                    ],
+                    width="auto",
+                ),
+                dbc.Col([]),
+                dbc.Col(
+                    [
+                        dbc.Button(
+                            "Generate PDF",
+                            id="pdf_generate_button",
+                            className="btn-outline-danger",
+                        )
+                    ],
+                    width="auto",
+                ),
+                dbc.Col(
+                    [  
+                        html.Div(
+                            id="download-area",
+                            className="block",
+                            children=[
+                                dbc.Button(
+                                    "Download",
+                                    id="pdf_download_button",
+                                    className="btn-secondary disabled",
+                                    disabled = True
+                                ) 
+                            ]
+                        )
                     ],
                     width="auto",
                 ),
@@ -583,6 +617,50 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
 
     return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
             dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+
+def build_download_button(uri):
+    """Generates a download button for the resource"""
+    button = html.Form(
+        action=uri,
+        method="get",
+        target = "_blank",
+        children=[
+            dbc.Button(
+                id = "pdf_download_button",
+                className="btn-outline-primary",
+                disabled = False,
+                type="submit",
+                children=["download"]
+            )
+        ]
+    )
+    return button
+
+@app.callback(
+    Output(component_id="download-area", component_property="children"),
+    Output(component_id="pdf_download_button", component_property="className"),
+    Output(component_id="pdf_download_button", component_property="disabled"),
+    Input(component_id="pdf_generate_button", component_property="n_clicks"),
+    Input(component_id="transcript_table", component_property="data")
+)
+
+def pdf_generate(n_clicks, current_transcript):
+    trigger = dash.callback_context.triggered[0]["prop_id"]
+    if trigger == "pdf_generate_button.n_clicks":
+        transcript = pd.DataFrame.from_records(current_transcript)
+        uri = create_pdf.create_pdf(transcript)
+        return [build_download_button(uri)], dash.no_update, False
+    return dash.no_update, "btn-secondary disabled", True
+
+
+@app.server.route('/downloadable/<path:path>')
+def serve_static(path):
+    return flask.send_from_directory(
+        os.path.join(".", 'downloadable'), path
+    )
+
+
+
 
 @app.callback(
     Output(component_id="keywords_plot", component_property="figure"),
