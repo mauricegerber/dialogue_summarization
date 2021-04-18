@@ -662,6 +662,7 @@ def serve_static(path):
 
 
 
+
 @app.callback(
     Output(component_id="keywords_plot", component_property="figure"),
     Output(component_id="keywords_table", component_property="data"),
