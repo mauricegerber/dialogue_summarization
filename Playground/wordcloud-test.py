@@ -18,7 +18,8 @@ transcript = pd.read_csv(
 transcript["Time"] = transcript["Time"].str.replace("60", "59")
 
 stop_words = set(stopwords.words("english"))
-stop_words |= set(["Thank", "Joe", "Biden", "Donald", "Trump", "America", "American", "President"])
+stop_words |= set(["Thank", "Joe", "Biden", "Donald", "Trump", "America", "American", "President", "Harris", "I'm"])
+sw_lower = [each_string.lower() for each_string in stop_words]
 
 class GroupedColorFunc(object):
     """Create a color function object which assigns DIFFERENT SHADES of
@@ -71,7 +72,7 @@ minutes = minutes[1:]
 
 def analyse_minute(timestamp):
     minute = 0
-    if len(timestamp) > 5:
+    if len(timestamp) > steps:
         minute = 60 * int(timestamp[0:timestamp.find(":",0,len(timestamp))])
         timestamp = timestamp[timestamp.find(":",0,len(timestamp))+1:]
         
@@ -79,10 +80,12 @@ def analyse_minute(timestamp):
     return(minute)
 
 def compare_wordlist(text_old, text_new):
-    w_old = text_old.split()
-    w_new = text_new.split()
-    words_old = [x for x in w_old + w_new if x not in w_new]
-    words_new = [x for x in w_old + w_new if x not in w_old]
+    w_old_normal = text_old.split()
+    w_new_normal = text_new.split()
+    w_old = [each_string.lower() for each_string in w_old_normal]
+    w_new = [each_string.lower() for each_string in w_new_normal]
+    words_old = [x for x in w_old + w_new if x not in w_new and x not in sw_lower]
+    words_new = [x for x in w_old + w_new if x not in w_old and x not in sw_lower]
     return words_old, words_new
 
 def create_wordcloud(text, words_old, words_new):
@@ -96,7 +99,7 @@ def create_wordcloud(text, words_old, words_new):
     default_color = "grey"
     grouped_color_func = GroupedColorFunc(color_to_words, default_color)
 
-    wordcloud = WordCloud(stopwords=stop_words, collocations=False, max_words = 10).generate(text.lower())
+    wordcloud = WordCloud(stopwords=stop_words, collocations=False, max_words = 15).generate(text.lower())
     wordcloud.recolor(color_func=grouped_color_func)
 
     plt.figure(figsize=(15,10))
@@ -107,8 +110,8 @@ def create_wordcloud(text, words_old, words_new):
 
 
 text = ""
-index_min = 0
 text_old = ""
+index_min = 0
 for i in range(nrow+1):
     t = transcript.iloc[i]["Utterance"]
     min_count = analyse_minute(transcript.iloc[i]["Time"])
@@ -126,8 +129,17 @@ for i in range(nrow+1):
 
     if i == nrow:
         co_wo = compare_wordlist(text_old, text)
-        create_wordcloud(text, co_wo[1], co_wo[2])
-        
+        create_wordcloud(text, co_wo[0], co_wo[1])
+
+
+# a = ["a", "Basil", "cool", "Cool", "harris"]
+# b = ["A", "President", "Cool", "yey", "harris"]
+# sw = set(["a", "Harris", "president"])
+# wold = [x for x in a + b if x not in b and x not in sw]
+# wnew = [x for x in a + b if x not in a and x not in sw]
+
+# a = [each_string.lower() for each_string in a]
+# print(a)
 
 # text = ""
 # for t in transcript[1:5]["Utterance"]:
