@@ -27,6 +27,7 @@ kw_extractor = KeyBERT('distilbert-base-nli-mean-tokens')
 sys.path.insert(0, "./lib")
 import texttiling
 import create_pdf
+import split_dialog
 
 # TO DO
 # erstellte PDF direkt nach neuem generieren löschen
@@ -447,6 +448,19 @@ app.layout = dbc.Container(
                                     ),
                                 ],
                                 ),
+                                dbc.Tab(label="Wordcloud", children=[
+                                    html.Div(style={"height": vertical_space}),
+                                    
+                                    dcc.Graph(
+                                        id="wordcloud_plot",
+                                        figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                        #config={"displayModeBar": False},
+                                        style={"height": "250px"},
+                                    ),
+                                    
+
+                                ],
+                                ),
                             ],
                         ),
                     ],
@@ -736,6 +750,64 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language,
         return fig, keywords_table
 
     return dash.no_update, dash.no_update
+
+
+
+@app.callback(
+    Output(component_id="wordcloud_plot", component_property="figure"),
+    Input(component_id="transcript_table", component_property="data"),
+)
+
+def wordcloud_creator(data):
+    # for index in range(len(data)):
+    #     print(data[index]["Utterance"])
+    a = split_dialog.split_dialog(data, 5)
+    print(a[2])     
+    
+    
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=[0, 1, 2],
+        y=[1, 1, 1],
+        mode="lines+markers+text",
+        name="Lines, Markers and Text",
+        text=["Text A", "Text B", "Text C"],
+        textposition="top center"
+    ))
+    fig.add_trace(go.Scatter(
+    x=[0, 1, 2],
+    y=[2, 2, 2],
+    mode="markers+text",
+    name="Markers and Text",
+    text=["Text D", "Text E", "Text F"],
+    textposition="bottom center"
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=[0, 1, 2],
+        y=[3, 3, 3],
+        mode="lines+text",
+        name="Lines and Text",
+        text=["Text G", "Text H", "Text I"],
+        textposition="bottom center"
+    ))
+
+
+    fig["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})
+
+    fig.update_layout(
+        xaxis_title="Gap between pseudosentences",
+        yaxis_title="Depth score",
+    )
+    
+    
+    return fig
+
+
+
+
+
 
 if __name__ == "__main__":
     # context = ("/etc/letsencrypt/live/projects.pascalaigner.ch/cert.pem", "/etc/letsencrypt/live/projects.pascalaigner.ch/privkey.pem")
