@@ -1,3 +1,9 @@
+from nltk.corpus import stopwords, wordnet
+from textblob import TextBlob
+import nltk
+from collections import Counter
+
+
 def split_dialog(data, steps=5):
     nrow = len(data)-1
     last_min = data[nrow]["Time"]
@@ -14,6 +20,30 @@ def split_dialog(data, steps=5):
             
         minute += int(timestamp[0:timestamp.find(":",0,len(timestamp))])
         return(minute)
+
+    def eliminate_stopwords(text):
+        # stop_words = set(stopwords.words("english"))
+        # stop_words |= set(["Thank", "Joe", "Biden", "Donald", "Trump", "America", "American", "President", "Harris", "I'm", "would", "know", "we're", "one", "two", "three", "four", 
+        # "first", "said", "going", "say", "think", "go", "made"])
+        # sw_lower = [each_string.lower() for each_string in stop_words]
+        # text_sp = text.split()
+
+        # words_small = [each_string.lower() for each_string in text_sp]
+        # words = [x for x in words_small if x not in sw_lower]
+        
+        
+        # words = TextBlob(text)
+        # print(words)
+
+        sentences = nltk.sent_tokenize(text) #tokenize sentences
+        nouns = [] #empty to array to hold all nouns
+
+        for sentence in sentences:
+            for word,pos in nltk.pos_tag(nltk.word_tokenize(str(sentence))):
+                if (pos == 'NN' or pos == 'NNP' or pos == 'NNS' or pos == 'NNPS'):
+                    nouns.append(word)
+
+        return nouns
     
     text = ""
     text_old = ""
@@ -28,11 +58,15 @@ def split_dialog(data, steps=5):
             text += " " + t
             
         else:
-            text_data.append([text])
+            words = eliminate_stopwords(text)
+            counts = Counter(words)
+            text_data.append(counts)
             index_min += 1
             text = data[i]["Utterance"]
 
         if i == nrow:
-            text_data.append([text])
+            words = eliminate_stopwords(text)
+            counts = Counter(words)
+            text_data.append(counts)
    
     return text_data

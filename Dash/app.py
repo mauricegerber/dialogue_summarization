@@ -8,6 +8,8 @@ import base64
 import io
 import re
 import math
+import random
+import scipy.special as sc
 
 import flask
 import dash
@@ -455,7 +457,7 @@ app.layout = dbc.Container(
                                         id="wordcloud_plot",
                                         figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
                                         #config={"displayModeBar": False},
-                                        style={"height": "250px"},
+                                        style={"height": "700px"},
                                     ),
                                     
 
@@ -759,47 +761,68 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language,
 )
 
 def wordcloud_creator(data):
-    # for index in range(len(data)):
-    #     print(data[index]["Utterance"])
-    a = split_dialog.split_dialog(data, 5)
-    print(a[2])     
+    words = split_dialog.split_dialog(data, 5)
+
+    dict_selected = words[0]
+    ldict = len(dict_selected)
+
+    size_multiplier = 4
+    for key in dict_selected.keys():
+        dict_selected[key] = dict_selected[key] * size_multiplier
     
+    coordX = []
+    coordY = []
     
+    # for i in range(5):
+    #     phi = random.randrange(0,round(2*math.pi, 2)*100)
+    #     costheta = random.randrange(-1,1)
+    #     u = random.randrange(0,1)
+    #     theta = math.acos( costheta )
+    #     r = 119 * u**(1/3)
+    #     coordX.append( r * math.sin( theta) * math.cos( phi/100 ))
+    #     coordY.append( r * math.sin( theta) * math.sin( phi/100 ))
+    
+
+    def sample(center,radius,n_per_sphere):
+        r = radius
+        ndim = center.size
+        x = np.random.normal(size=(n_per_sphere, ndim))
+        ssq = np.sum(x**2,axis=1)
+        fr = r*sc.gammainc(ndim/2,ssq/2)**(1/ndim)/np.sqrt(ssq)
+        frtiled = np.tile(fr.reshape(n_per_sphere,1),(1,ndim))
+        p = center + np.multiply(x,frtiled)
+        return p
+    ok = sample(np.array([0,0]), 1, ldict)
+
+    coordX = ok[:,0]
+    coordY = ok[:,1]
+
+    # xcord = []
+    # for i in range(ldict):
+    #     xcord.append(i*0.2)
+    # ycord = [2] * ldict
+
+    size = list(dict_selected.values())
+    word = list(dict_selected.keys())
+ 
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
-        x=[0, 1, 2],
-        y=[1, 1, 1],
-        mode="lines+markers+text",
-        name="Lines, Markers and Text",
-        text=["Text A", "Text B", "Text C"],
-        textposition="top center"
+    x=coordX ,
+    y=coordY ,
+    mode="text",
+    name="Text",
+    text=word,
+    textposition="top center",
+    textfont=dict(size=size)
     ))
-    fig.add_trace(go.Scatter(
-    x=[0, 1, 2],
-    y=[2, 2, 2],
-    mode="markers+text",
-    name="Markers and Text",
-    text=["Text D", "Text E", "Text F"],
-    textposition="bottom center"
-    ))
-
-    fig.add_trace(go.Scatter(
-        x=[0, 1, 2],
-        y=[3, 3, 3],
-        mode="lines+text",
-        name="Lines and Text",
-        text=["Text G", "Text H", "Text I"],
-        textposition="bottom center"
-    ))
-
 
     fig["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})
 
-    fig.update_layout(
-        xaxis_title="Gap between pseudosentences",
-        yaxis_title="Depth score",
-    )
+    # fig.update_layout(
+    #     xaxis_title="Gap between pseudosentences",
+    #     yaxis_title="Depth score",
+    # )
     
     
     return fig
