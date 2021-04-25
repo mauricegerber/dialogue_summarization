@@ -18,7 +18,8 @@ transcript = pd.read_csv(
 transcript["Time"] = transcript["Time"].str.replace("60", "59")
 
 stop_words = set(stopwords.words("english"))
-stop_words |= set(["Thank", "Joe", "Biden", "Donald", "Trump", "America", "American", "President", "Harris", "I'm"])
+stop_words |= set(["Thank", "Joe", "Biden", "Donald", "Trump", "America", "American", "President", "Harris", "I'm", "would", "know", "we're", "one", "two", "three", "four",
+"first", "said", "going", "say", "think", "go", "made"])
 sw_lower = [each_string.lower() for each_string in stop_words]
 
 class GroupedColorFunc(object):
