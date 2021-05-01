@@ -64,7 +64,7 @@ def calculate_timestamps(transcript):
 
 transcripts_dir = "./transcripts/"
 transcript_files = os.listdir(transcripts_dir)
-initial_transcript_index = 1
+initial_transcript_index = 0
 
 transcripts = []
 for f in transcript_files:
@@ -143,7 +143,7 @@ app.layout = dbc.Container(
                             "Generate PDF",
                             id="pdf_generate_button",
                             className="btn-outline-danger",
-                        )
+                        ),
                     ],
                     width="auto",
                 ),
@@ -376,10 +376,10 @@ app.layout = dbc.Container(
                                                                     dbc.Input(
                                                                         id="cutoff_input",
                                                                         type="number",
-                                                                        min=0,
-                                                                        max=1,
-                                                                        step=0.01,
-                                                                        value=0.45,
+                                                                        min=2,
+                                                                        max=10,
+                                                                        step=1,
+                                                                        value=2,
                                                                     ),
                                                                 ],
                                                                 width="auto",

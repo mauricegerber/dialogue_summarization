@@ -1,9 +1,9 @@
 import re
-import math
+import numpy as np
 
 # based on https://www.nltk.org/_modules/nltk/tokenize/texttiling.html
 
-def texttiling(transcript, stopwords, w, k, cutoff, min_boundary_distance=20):
+def texttiling(transcript, stopwords, w, k, n, min_boundary_distance=20):
 
     class TokenSequence(object):
         def __init__(self, index, word_list):
@@ -51,7 +51,7 @@ def texttiling(transcript, stopwords, w, k, cutoff, min_boundary_distance=20):
             ts_occs = filter(lambda o: o[0] in block, token_table[tok].ts_occurrences)
             freq = sum([tsocc[1] for tsocc in ts_occs])
             return freq
-        
+
         gap_scores = []
         n_gaps = len(token_sequences) - 1
 
@@ -70,7 +70,7 @@ def texttiling(transcript, stopwords, w, k, cutoff, min_boundary_distance=20):
                 score_divisor_b1 += blk_frq(t, b1) ** 2
                 score_divisor_b2 += blk_frq(t, b2) ** 2
             try:
-                score = score_dividend / math.sqrt(score_divisor_b1 * score_divisor_b2)
+                score = score_dividend / np.sqrt(score_divisor_b1 * score_divisor_b2)
             except ZeroDivisionError:
                 pass
             gap_scores.append(score)
@@ -102,34 +102,27 @@ def texttiling(transcript, stopwords, w, k, cutoff, min_boundary_distance=20):
 
     def identify_boundaries(depth_scores):
         """Identifies boundaries at the peaks of similarity score differences."""
-        boundaries = [0 for x in depth_scores]
-        # mean = np.mean(depth_scores)
-        # sd = np.std(depth_scores)
-        # cutoff = mean - sd / 2.0
-
-        depth_tuples = zip(depth_scores, range(len(depth_scores)))
-        hp = filter(lambda x: x[0] > cutoff, depth_tuples)
-        boundaries = [i for value, i in hp]
-
+        boundaries = sorted(np.argsort(depth_scores)[-n:])
         removed_boundaries = []
         for i in range(1, len(boundaries)):
             if boundaries[i] <= boundaries[i-1] + min_boundary_distance:
                 removed_boundaries.append(boundaries[i])
         boundaries = [b for b in boundaries if b not in removed_boundaries]
-
         return boundaries
 
     text = ""
     utterance_break = 0
     utterance_breaks = [0]
+    # utterance_breaks are the position of the first letter of each utterance in the concatenated text
     for utterance in transcript["Utterance"].str.lower():
         text += utterance
         utterance_break += len(utterance)
         utterance_breaks.append(utterance_break)
     del utterance_breaks[-1]
 
-    tokseqs = divide_to_token_sequences(text)
+    print(utterance_breaks)
 
+    tokseqs = divide_to_token_sequences(text)
     for ts in tokseqs:
         ts.word_list = [wi for wi in ts.word_list if wi[0] not in stopwords]
 
@@ -140,15 +133,36 @@ def texttiling(transcript, stopwords, w, k, cutoff, min_boundary_distance=20):
 
     boundaries = identify_boundaries(depth_scores)
 
-    boundaries_in_text = []
+    print(boundaries)
+
+    boundaries_last_word_index = []
     for ts in tokseqs:
         if ts.index in boundaries:
-            boundaries_in_text.append(ts.word_list[-1][1])
+            boundaries_last_word_index.append(ts.word_list[-1][1])
 
-    normalized_boundaries_in_text = []
-    for b in boundaries_in_text:
-        diff = list(map(lambda list_value: b - list_value, utterance_breaks))
-        closest_smaller_value = max([i for i in range(len(diff)) if diff[i] > 0])
-        normalized_boundaries_in_text.append(closest_smaller_value)
+    print(boundaries_last_word_index)
 
-    return normalized_boundaries_in_text, depth_scores
+    normalized_boundaries = []
+    for bi in boundaries_last_word_index:
+        # calculate difference between current boundaries_last_word_index (bi) and all utterance_breaks (ub)
+        diff = list(map(lambda ub: bi - ub, utterance_breaks))
+        print(diff)
+        # get index of smallest positive value from diff list
+        # the reason for this procedure is that the boundaries calculated by the texttiling algorithm do not
+        # necessarily match with the utterance breaks
+        # one needs to define what happens when topic boundary is detected within one utterance
+        # in this case, the utterance is added to the previous topic
+        # more technical: if an utterance break occurs at text position 1000 and another one at position 1200
+        # texttiling calculates a boundary at position 20 (the gap between pseudosentence 20 and 21)
+        # now, the starting position of the last word in pseudosentence 20 is extracted which is 1100
+        # the difference between the boundary and all utterance breaks is calculated which is [100, -100]
+        # the index of the smallest positive value is extracted which is the one of the number 100, e.g. 10
+        # this number means that the first topic includes utterances 0 to and with 10
+
+        smallest_positive_value_index = max([i for i in range(len(diff)) if diff[i] > 0])
+        print(smallest_positive_value_index)
+        normalized_boundaries.append(smallest_positive_value_index)
+
+    print(normalized_boundaries)
+
+    return normalized_boundaries, depth_scores
