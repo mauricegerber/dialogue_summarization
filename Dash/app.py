@@ -452,13 +452,33 @@ app.layout = dbc.Container(
                                 ),
                                 dbc.Tab(label="Wordcloud", children=[
                                     html.Div(style={"height": vertical_space}),
-                                    
-                                    dcc.Graph(
+                                    dbc.Row([
+                                        dbc.Col([
+                                        dcc.Graph(
                                         id="wordcloud_plot",
                                         figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
                                         #config={"displayModeBar": False},
-                                        style={"height": "700px"},
+                                        style={"height": "650px", "width": "1800px"},
                                     ),
+
+
+                                    ]),
+                                    
+                                    dbc.Col([
+                                            dcc.Slider(
+                                                id="wordcloud_steps_slider",
+                                                min=0,
+                                                max=500,
+                                                step = 100,
+                                                value = 0,
+                                                marks={},
+                                                vertical = True
+                                            ),
+                                        ],
+                                    ),
+
+                                    ]),
+                                    
                                     
 
                                 ],
@@ -757,10 +777,14 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language,
 
 @app.callback(
     Output(component_id="wordcloud_plot", component_property="figure"),
-    Input(component_id="transcript_table", component_property="data"),
+    Input(component_id="transcript_selector", component_property="value"),
+    #State(component_id="transcript_table", component_property="data"),
 )
 
-def wordcloud_creator(data):
+def wordcloud_creator(selected_transcript):
+    transcript = transcripts[int(selected_transcript)]
+    data = transcript.to_dict("records")
+
     words = split_dialog.split_dialog(data, 5)
 
     dict_selected = words[0]
