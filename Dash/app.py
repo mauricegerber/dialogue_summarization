@@ -9,7 +9,6 @@ import io
 import re
 import math
 import random
-import scipy.special as sc
 
 import flask
 import dash
@@ -30,6 +29,7 @@ sys.path.insert(0, "./lib")
 import texttiling
 import create_pdf
 import split_dialog
+import wordcloud_pl
 
 # TO DO
 # erstellte PDF direkt nach neuem generieren löschen
@@ -452,35 +452,86 @@ app.layout = dbc.Container(
                                 ),
                                 dbc.Tab(label="Wordcloud", children=[
                                     html.Div(style={"height": vertical_space}),
-                                    dbc.Row([
-                                        dbc.Col([
-                                        dcc.Graph(
-                                        id="wordcloud_plot",
-                                        figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
-                                        #config={"displayModeBar": False},
-                                        style={"height": "650px", "width": "1800px"},
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    html.H5("Parameters"),
+                                                    dbc.Row(
+                                                        [
+                                                            dbc.Col(
+                                                                [
+                                                                    html.Div("Textblock length"),
+                                                                    html.Div("in minutes"),
+                                                                ],
+                                                                width="auto",
+                                                            ),
+                                                            dbc.Col(
+                                                                [
+                                                                    dbc.Input(
+                                                                        id="textblock_length_input",
+                                                                        type="number",
+                                                                        min=1,
+                                                                        max=100,
+                                                                        step=1,
+                                                                        value=5,
+                                                                    ),
+                                                                ],
+                                                                width="auto",
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
+                                                width="auto",
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    html.Div(style={"height": "27px"}),
+                                                    dbc.Button(
+                                                        "Apply",
+                                                        id="apply_wordcloud_settings",
+                                                        className="btn-outline-primary",
+                                                    ),
+                                                ],
+                                                width="auto",
+                                            ),
+
+                                        ],
                                     ),
-
-
-                                    ]),
-                                    
-                                    dbc.Col([
-                                            dcc.Slider(
-                                                id="wordcloud_steps_slider",
-                                                min=0,
-                                                max=500,
-                                                step = 100,
-                                                value = 0,
-                                                marks={},
-                                                vertical = True
+                                    html.Div(style={"height": vertical_space}),
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    dcc.Graph(
+                                                        id="wordcloud_plot",
+                                                        figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                                        #config={"displayModeBar": False},
+                                                        #style={"height": "600px"},
+                                                    ),
+                                                ],
+                                            ),
+                                            dbc.Col(
+                                                [   
+                                                    html.Div(
+                                                        id = "vertical_slider",
+                                                        style = {"visibility": "hidden"},
+                                                        children = [
+                                                            dcc.Slider(
+                                                                id="wordcloud_steps_slider",
+                                                                min=0,
+                                                                max=9,
+                                                                step = 1,
+                                                                value = 9,
+                                                                #marks={0:"500", 100:"400", 200:"300", 300:"200", 400:"100", 500:"0"},
+                                                                vertical = True,        
+                                                            ),
+                                                        ],
+                                                    ),  
+                                                ], width = "auto"
                                             ),
                                         ],
                                     ),
-
-                                    ]),
-                                    
-                                    
-
                                 ],
                                 ),
                             ],
@@ -777,79 +828,53 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language,
 
 @app.callback(
     Output(component_id="wordcloud_plot", component_property="figure"),
+    Output(component_id="vertical_slider", component_property="style"),
+    Output(component_id="wordcloud_steps_slider", component_property="max"),
+    Output(component_id="wordcloud_steps_slider", component_property="value"),
+    #Output(component_id="wordcloud_steps_slider", component_property="style"),
+    Input(component_id="apply_wordcloud_settings", component_property="n_clicks"),
     Input(component_id="transcript_selector", component_property="value"),
-    #State(component_id="transcript_table", component_property="data"),
+    Input(component_id="wordcloud_steps_slider", component_property="value"),
+    Input(component_id="textblock_length_input", component_property="value"),
+    
 )
 
-def wordcloud_creator(selected_transcript):
-    transcript = transcripts[int(selected_transcript)]
-    data = transcript.to_dict("records")
-
-    words = split_dialog.split_dialog(data, 5)
-
-    dict_selected = words[0]
-    ldict = len(dict_selected)
-
-    size_multiplier = 4
-    for key in dict_selected.keys():
-        dict_selected[key] = dict_selected[key] * size_multiplier
+def wordcloud_creator(n_clicks, selected_transcript, section, slct_min):
     
-    coordX = []
-    coordY = []
-    
-    # for i in range(5):
-    #     phi = random.randrange(0,round(2*math.pi, 2)*100)
-    #     costheta = random.randrange(-1,1)
-    #     u = random.randrange(0,1)
-    #     theta = math.acos( costheta )
-    #     r = 119 * u**(1/3)
-    #     coordX.append( r * math.sin( theta) * math.cos( phi/100 ))
-    #     coordY.append( r * math.sin( theta) * math.sin( phi/100 ))
+    if dash.callback_context.triggered[0]["prop_id"] == "apply_wordcloud_settings.n_clicks":    
+        transcript = transcripts[int(selected_transcript)]
+        data = transcript.to_dict("records")
+
+        words = split_dialog.split_dialog(data, slct_min)
+        
+        max_section = len(words)-1
+        current_section = max_section
+        
+        dict_selected = words[0]
+        ldict = len(dict_selected)
+        
+        fig = wordcloud_pl.plot(dict_selected, ldict)
+        
+        return fig, {"visibility": "visible"}, max_section, current_section
     
 
-    def sample(center,radius,n_per_sphere):
-        r = radius
-        ndim = center.size
-        x = np.random.normal(size=(n_per_sphere, ndim))
-        ssq = np.sum(x**2,axis=1)
-        fr = r*sc.gammainc(ndim/2,ssq/2)**(1/ndim)/np.sqrt(ssq)
-        frtiled = np.tile(fr.reshape(n_per_sphere,1),(1,ndim))
-        p = center + np.multiply(x,frtiled)
-        return p
-    ok = sample(np.array([0,0]), 1, ldict)
+    if dash.callback_context.triggered[0]["prop_id"] == "wordcloud_steps_slider.value":    
+        transcript = transcripts[int(selected_transcript)]
+        data = transcript.to_dict("records")
 
-    coordX = ok[:,0]
-    coordY = ok[:,1]
+        words = split_dialog.split_dialog(data, slct_min)
+        
+        max_section = len(words)-1
+        current_section = abs(section - max_section)
+        
+        dict_selected = words[current_section]
+        ldict = len(dict_selected)
 
-    # xcord = []
-    # for i in range(ldict):
-    #     xcord.append(i*0.2)
-    # ycord = [2] * ldict
+        fig = wordcloud_pl.plot(dict_selected, ldict)
 
-    size = list(dict_selected.values())
-    word = list(dict_selected.keys())
- 
-    fig = go.Figure()
+        return fig, dash.no_update, dash.no_update, dash.no_update
 
-    fig.add_trace(go.Scatter(
-    x=coordX ,
-    y=coordY ,
-    mode="text",
-    name="Text",
-    text=word,
-    textposition="top center",
-    textfont=dict(size=size)
-    ))
-
-    fig["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})
-
-    # fig.update_layout(
-    #     xaxis_title="Gap between pseudosentences",
-    #     yaxis_title="Depth score",
-    # )
-    
-    
-    return fig
+    return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
 
 

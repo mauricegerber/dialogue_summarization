@@ -55,7 +55,7 @@ input[type=number] {
 .rc-slider-handle:focus {
     border-color: #1a1a1a;
 }
-.rc-slider-dot {
+#timeline_slider > div > div.rc-slider-step > span.rc-slider-dot{
     top: 16px;
     height: 16px;
     width: 2px;
@@ -63,11 +63,26 @@ input[type=number] {
     border: 1px solid #e9e9e9;
     border-radius: 0px;
 }
-.rc-slider-dot-active {
+#timeline_slider > div > div.rc-slider-step > span.rc-slider-dot-active {
     background-color: #1a1a1a;
     border-color: #1a1a1a;
 }
 .rc-slider-mark {
+    display: none;
+}
+.rc-slider-vertical{
+    height: 300px;
+}
+#wordcloud_steps_slider > div > div.rc-slider-track{
+    background-color: #e9e9e9;
+}
+#wordcloud_steps_slider > div > div.rc-slider-mark{
+    display: inline;
+}
+#wordcloud_steps_slider > div > div.rc-slider-step > span.rc-slider-dot{
+    display: none;
+}
+#wordcloud_steps_slider > div > div.rc-slider-step > span.rc-slider-dot-active{
     display: none;
 }
 
