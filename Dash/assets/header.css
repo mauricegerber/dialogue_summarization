@@ -85,6 +85,9 @@ input[type=number] {
 #wordcloud_steps_slider > div > div.rc-slider-step > span.rc-slider-dot-active{
     display: none;
 }
+#wordcloud_steps_slider > div > div.rc-slider-mark > span{
+    width: 75px;
+}
 
 /* style DataTable element as it is not covered by the Bootstrap theme */
 .dash-cell-value > p {
