@@ -24,6 +24,7 @@ import plotly.graph_objects as go
 from nltk.corpus import stopwords
 from keybert import KeyBERT
 kw_extractor = KeyBERT('distilbert-base-nli-mean-tokens')
+from sklearn.preprocessing import MinMaxScaler
 
 sys.path.insert(0, "./lib")
 import texttiling
@@ -901,13 +902,47 @@ def wordcloud_creator(n_clicks, selected_transcript, section, slct_min):
 @app.callback(
     Output(component_id="animation", component_property="figure"),
     Input(component_id="apply_animation", component_property="n_clicks"),
+    Input(component_id="transcript_selector", component_property="value"),
 )
 
-def animation(n_clicks):
+def animation(n_clicks, selected_transcript):
     url = "https://raw.githubusercontent.com/plotly/datasets/master/gapminderDataFiveYear.csv"
     dataset = pd.read_csv(url)
+    scaler = MinMaxScaler(feature_range=(10, 50))
+    dataset["pop_scal"] = scaler.fit_transform(dataset["pop"].values.reshape(-1,1))
 
     years = ["1952", "1962", "1967", "1972", "1977", "1982", "1987", "1992", "1997", "2002", "2007"]
+
+    transcript = transcripts[int(selected_transcript)]
+    data = transcript.to_dict("records")
+    words, min_seq = split_dialog.split_dialog(data, 5)
+
+    words_pd = pd.DataFrame(columns=["index", "0", "block"])
+    for w in range(len(words)):
+        mini_df = pd.DataFrame.from_dict(words[w], orient='index')
+        mini_df = mini_df.reset_index()
+        mini_df["block"] = w
+        words_pd = pd.concat([words_pd, mini_df], ignore_index=True)
+    
+    words_pd.drop(words_pd.columns[0], axis = 1, inplace=True)
+    words_pd.rename(columns={"block": "block", "index": "word", 0: "count"}, inplace = True)
+
+    scaler = MinMaxScaler(feature_range=(10, 50))
+    words_pd["count_scal"] = scaler.fit_transform(words_pd["count"].values.reshape(-1,1))
+    words_pd["x-coord"] = 0
+    words_pd["y-coord"] = 0
+
+    w_unique = words_pd["word"].unique()
+    random.x = random.sample(range(len(w_unique)), len(w_unique))
+    random.y = random.sample(range(len(w_unique)), len(w_unique))
+    w_unique = w_unique.tolist()
+    
+    for i in range(len(words_pd)):
+        index = w_unique.index(words_pd["word"][i])
+        words_pd["x-coord"][i] = random.x[index]
+        words_pd["y-coord"][i] = random.y[index]
+
+    print(words_pd)
 
     # make list of continents
     continents = []
@@ -983,13 +1018,9 @@ def animation(n_clicks):
         data_dict = {
             "x": list(dataset_by_year_and_cont["lifeExp"]),
             "y": list(dataset_by_year_and_cont["gdpPercap"]),
-            "mode": "markers",
+            "mode": "text",
             "text": list(dataset_by_year_and_cont["country"]),
-            "marker": {
-                "sizemode": "area",
-                "sizeref": 200000,
-                "size": list(dataset_by_year_and_cont["pop"])
-            },
+            "textfont": dict(size = list(dataset_by_year_and_cont["pop_scal"])),
             "name": continent
         }
         fig_dict["data"].append(data_dict)
@@ -1005,13 +1036,9 @@ def animation(n_clicks):
             data_dict = {
                 "x": list(dataset_by_year_and_cont["lifeExp"]),
                 "y": list(dataset_by_year_and_cont["gdpPercap"]),
-                "mode": "markers",
+                "mode": "text",
                 "text": list(dataset_by_year_and_cont["country"]),
-                "marker": {
-                    "sizemode": "area",
-                    "sizeref": 200000,
-                    "size": list(dataset_by_year_and_cont["pop"])
-                },
+                "textfont": dict(size = list(dataset_by_year_and_cont["pop_scal"])),
                 "name": continent
             }
             frame["data"].append(data_dict)
