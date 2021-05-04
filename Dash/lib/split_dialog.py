@@ -3,7 +3,6 @@ from textblob import TextBlob
 import nltk
 from collections import Counter
 
-
 def split_dialog(data, steps):
     
     def analyse_minute(timestamp):
@@ -53,6 +52,7 @@ def split_dialog(data, steps):
     text_old = ""
     index_min = 0
     text_data = []
+    n = 15
     
     for i in range(nrow+1):
         t = data[i]["Utterance"]
@@ -63,14 +63,24 @@ def split_dialog(data, steps):
             
         else:
             words = eliminate_stopwords(text)
-            counts = Counter(words)
-            text_data.append(counts)
+            counts_all = Counter(words)
+            
+            counts_n = dict()
+            for key, value in counts_all.most_common(n):
+                counts_n[key] = value
+
+            text_data.append(counts_n)
             index_min += 1
             text = data[i]["Utterance"]
 
         if i == nrow:
             words = eliminate_stopwords(text)
-            counts = Counter(words)
-            text_data.append(counts)
+            counts_all = Counter(words)
+            
+            counts_n = dict()
+            for key, value in counts_all.most_common(n):
+                counts_n[key] = value
+
+            text_data.append(counts_n)
    
     return text_data, minutes_seq

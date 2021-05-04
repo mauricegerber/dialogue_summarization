@@ -909,8 +909,6 @@ def animation(n_clicks, selected_transcript):
     data = transcript.to_dict("records")
     words, min_seq = split_dialog.split_dialog(data, 5)
 
-    print(words)
-
     words_pd = pd.DataFrame(columns=["index", "0", "block"])
     for w in range(len(words)):
         mini_df = pd.DataFrame.from_dict(words[w], orient='index')
