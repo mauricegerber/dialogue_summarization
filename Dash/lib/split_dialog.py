@@ -42,7 +42,7 @@ def split_dialog(data, steps):
         nouns = [] #empty to array to hold all nouns
 
         for sentence in sentences:
-            for word,pos in nltk.pos_tag(nltk.word_tokenize(str(sentence))):
+            for word, pos in nltk.pos_tag(nltk.word_tokenize(str(sentence))):
                 if (pos == 'NN' or pos == 'NNP' or pos == 'NNS' or pos == 'NNPS'):
                     nouns.append(word)
         nouns_filtered = [x for x in nouns if x not in sw]

@@ -904,18 +904,12 @@ def wordcloud_creator(n_clicks, selected_transcript, section, slct_min):
     Input(component_id="apply_animation", component_property="n_clicks"),
     Input(component_id="transcript_selector", component_property="value"),
 )
-
 def animation(n_clicks, selected_transcript):
-    url = "https://raw.githubusercontent.com/plotly/datasets/master/gapminderDataFiveYear.csv"
-    dataset = pd.read_csv(url)
-    scaler = MinMaxScaler(feature_range=(10, 50))
-    dataset["pop_scal"] = scaler.fit_transform(dataset["pop"].values.reshape(-1,1))
-
-    years = ["1952", "1962", "1967", "1972", "1977", "1982", "1987", "1992", "1997", "2002", "2007"]
-
     transcript = transcripts[int(selected_transcript)]
     data = transcript.to_dict("records")
     words, min_seq = split_dialog.split_dialog(data, 5)
+
+    print(words)
 
     words_pd = pd.DataFrame(columns=["index", "0", "block"])
     for w in range(len(words)):
@@ -924,10 +918,10 @@ def animation(n_clicks, selected_transcript):
         mini_df["block"] = w
         words_pd = pd.concat([words_pd, mini_df], ignore_index=True)
     
-    words_pd.drop(words_pd.columns[0], axis = 1, inplace=True)
+    words_pd.drop(words_pd.columns[1], axis = 1, inplace=True)
     words_pd.rename(columns={"block": "block", "index": "word", 0: "count"}, inplace = True)
 
-    scaler = MinMaxScaler(feature_range=(10, 50))
+    scaler = MinMaxScaler(feature_range=(10, 70))
     words_pd["count_scal"] = scaler.fit_transform(words_pd["count"].values.reshape(-1,1))
     words_pd["x-coord"] = 0
     words_pd["y-coord"] = 0
@@ -942,13 +936,8 @@ def animation(n_clicks, selected_transcript):
         words_pd["x-coord"][i] = random.x[index]
         words_pd["y-coord"][i] = random.y[index]
 
-    print(words_pd)
+    blocks = words_pd["block"].unique().tolist()
 
-    # make list of continents
-    continents = []
-    for continent in dataset["continent"]:
-        if continent not in continents:
-            continents.append(continent)
     # make figure
     fig_dict = {
         "data": [],
@@ -958,23 +947,25 @@ def animation(n_clicks, selected_transcript):
 
     # fill in most of layout
     fig_dict["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})
-    fig_dict["layout"]["xaxis"] = {"range": [30, 85], "title": "Life Expectancy"}
-    fig_dict["layout"]["yaxis"] = {"title": "GDP per Capita", "type": "log"}
+    fig_dict["layout"]["xaxis"] = {"title": "x"}
+    fig_dict["layout"]["yaxis"] = {"title": "y"}
     fig_dict["layout"]["hovermode"] = "closest"
     fig_dict["layout"]["updatemenus"] = [
         {
             "buttons": [
                 {
-                    "args": [None, {"frame": {"duration": 500, "redraw": False},
-                                    "fromcurrent": True, "transition": {"duration": 300,
-                                                                        "easing": "quadratic-in-out"}}],
+                    "args": [None, {"frame": {"duration": 1500, "redraw": False},
+                                    "fromcurrent": True,
+                                    "transition": {"duration": 0, "easing": "linear"} # animation when clicking play
+                                    }],
                     "label": "Play",
                     "method": "animate"
                 },
                 {
                     "args": [[None], {"frame": {"duration": 0, "redraw": False},
                                     "mode": "immediate",
-                                    "transition": {"duration": 0}}],
+                                    #"transition": {"duration": 0}
+                                    }],
                     "label": "Pause",
                     "method": "animate"
                 }
@@ -996,11 +987,11 @@ def animation(n_clicks, selected_transcript):
         "xanchor": "left",
         "currentvalue": {
             "font": {"size": 20},
-            "prefix": "Year:",
+            "prefix": "Block:",
             "visible": True,
             "xanchor": "right"
         },
-        "transition": {"duration": 300, "easing": "cubic-in-out"},
+        "transition": {"duration": 0, "easing": "cubic-in-out"},
         "pad": {"b": 10, "t": 50},
         "len": 0.9,
         "x": 0.1,
@@ -1009,48 +1000,39 @@ def animation(n_clicks, selected_transcript):
     }
 
     # make data
-    year = 1952
-    for continent in continents:
-        dataset_by_year = dataset[dataset["year"] == year]
-        dataset_by_year_and_cont = dataset_by_year[
-            dataset_by_year["continent"] == continent]
+    block = blocks[0]
+    dataset_by_block = words_pd[words_pd["block"] == block]
+
+    data_dict = {
+        "x": list(dataset_by_block["x-coord"]),
+        "y": list(dataset_by_block["y-coord"]),
+        "mode": "text",
+        "text": list(dataset_by_block["word"]),
+        "textfont": dict(size = list(dataset_by_block["count_scal"])),
+    }
+    fig_dict["data"].append(data_dict)
+
+    for block in blocks:
+        frame = {"data": [], "name": str(block)}
+        dataset_by_block = words_pd[words_pd["block"] == block]
 
         data_dict = {
-            "x": list(dataset_by_year_and_cont["lifeExp"]),
-            "y": list(dataset_by_year_and_cont["gdpPercap"]),
+            "x": list(dataset_by_block["x-coord"]),
+            "y": list(dataset_by_block["y-coord"]),
             "mode": "text",
-            "text": list(dataset_by_year_and_cont["country"]),
-            "textfont": dict(size = list(dataset_by_year_and_cont["pop_scal"])),
-            "name": continent
+            "text": list(dataset_by_block["word"]),
+            "textfont": dict(size = list(dataset_by_block["count_scal"])),
         }
-        fig_dict["data"].append(data_dict)
-
-    # make frames
-    for year in years:
-        frame = {"data": [], "name": str(year)}
-        for continent in continents:
-            dataset_by_year = dataset[dataset["year"] == int(year)]
-            dataset_by_year_and_cont = dataset_by_year[
-                dataset_by_year["continent"] == continent]
-
-            data_dict = {
-                "x": list(dataset_by_year_and_cont["lifeExp"]),
-                "y": list(dataset_by_year_and_cont["gdpPercap"]),
-                "mode": "text",
-                "text": list(dataset_by_year_and_cont["country"]),
-                "textfont": dict(size = list(dataset_by_year_and_cont["pop_scal"])),
-                "name": continent
-            }
-            frame["data"].append(data_dict)
+        frame["data"].append(data_dict)
 
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
-            [year],
-            {"frame": {"duration": 300, "redraw": False},
+            [block],
+            {"frame": {"duration": 0, "redraw": False},
             "mode": "immediate",
-            "transition": {"duration": 300}}
+            "transition": {"duration": 0}}
         ],
-            "label": year,
+            "label": block,
             "method": "animate"}
         sliders_dict["steps"].append(slider_step)
 
@@ -1059,7 +1041,6 @@ def animation(n_clicks, selected_transcript):
     fig = go.Figure(fig_dict)
 
     return fig
-
 
 
 if __name__ == "__main__":

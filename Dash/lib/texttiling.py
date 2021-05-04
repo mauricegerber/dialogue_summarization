@@ -120,7 +120,7 @@ def texttiling(transcript, stopwords, w, k, n, min_boundary_distance=20):
         utterance_breaks.append(utterance_break)
     del utterance_breaks[-1]
 
-    print(utterance_breaks)
+    #print(utterance_breaks)
 
     tokseqs = divide_to_token_sequences(text)
     for ts in tokseqs:
@@ -133,20 +133,20 @@ def texttiling(transcript, stopwords, w, k, n, min_boundary_distance=20):
 
     boundaries = identify_boundaries(depth_scores)
 
-    print(boundaries)
+    #print(boundaries)
 
     boundaries_last_word_index = []
     for ts in tokseqs:
         if ts.index in boundaries:
             boundaries_last_word_index.append(ts.word_list[-1][1])
 
-    print(boundaries_last_word_index)
+    #print(boundaries_last_word_index)
 
     normalized_boundaries = []
     for bi in boundaries_last_word_index:
         # calculate difference between current boundaries_last_word_index (bi) and all utterance_breaks (ub)
         diff = list(map(lambda ub: bi - ub, utterance_breaks))
-        print(diff)
+        #print(diff)
         # get index of smallest positive value from diff list
         # the reason for this procedure is that the boundaries calculated by the texttiling algorithm do not
         # necessarily match with the utterance breaks
@@ -160,9 +160,9 @@ def texttiling(transcript, stopwords, w, k, n, min_boundary_distance=20):
         # this number means that the first topic includes utterances 0 to and with 10
 
         smallest_positive_value_index = max([i for i in range(len(diff)) if diff[i] > 0])
-        print(smallest_positive_value_index)
+        #print(smallest_positive_value_index)
         normalized_boundaries.append(smallest_positive_value_index)
 
-    print(normalized_boundaries)
+    #print(normalized_boundaries)
 
     return normalized_boundaries, depth_scores
