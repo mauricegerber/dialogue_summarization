@@ -3,7 +3,7 @@ from textblob import TextBlob
 import nltk
 from collections import Counter
 
-def split_dialog(data, steps):
+def split_dialog(data, steps, use_all=True, n=15):
     
     def analyse_minute(timestamp):
         minute = 0
@@ -33,7 +33,7 @@ def split_dialog(data, steps):
         # words_small = [each_string.lower() for each_string in text_sp]
         # words = [x for x in words_small if x not in sw_lower]
         
-        sw = ["i", "rei", "k.", "okay"]
+        sw = ["i", "rei", "k.", "okay", "hi", "president"]
         # words = TextBlob(text)
         # print(words)
 
@@ -49,10 +49,11 @@ def split_dialog(data, steps):
         return nouns_filtered
     
     text = ""
-    text_old = ""
     index_min = 0
     text_data = []
-    n = 15
+
+    counts = {}
+    all_unique_words = set()
     
     for i in range(nrow+1):
         t = data[i]["Utterance"]
@@ -63,11 +64,24 @@ def split_dialog(data, steps):
             
         else:
             words = eliminate_stopwords(text)
+
+            all_unique_words.update(set(words))
+
+            for unique_word in all_unique_words:
+                if unique_word not in counts:
+                    counts[unique_word] = [0] * len(minutes)
+            
+            for word in words:
+                counts[word][index_min] += 1
+
             counts_all = Counter(words)
             
-            counts_n = dict()
-            for key, value in counts_all.most_common(n):
-                counts_n[key] = value
+            if not use_all:
+                counts_n = dict()
+                for key, value in counts_all.most_common(n):
+                    counts_n[key] = value
+            else:
+                counts_n = counts_all
 
             text_data.append(counts_n)
             index_min += 1
@@ -75,12 +89,25 @@ def split_dialog(data, steps):
 
         if i == nrow:
             words = eliminate_stopwords(text)
+
+            all_unique_words.update(set(words))
+
+            for unique_word in all_unique_words:
+                if unique_word not in counts:
+                    counts[unique_word] = [0] * len(minutes)
+            
+            for word in words:
+                counts[word][index_min] += 1
+
             counts_all = Counter(words)
             
-            counts_n = dict()
-            for key, value in counts_all.most_common(n):
-                counts_n[key] = value
+            if not use_all:
+                counts_n = dict()
+                for key, value in counts_all.most_common(n):
+                    counts_n[key] = value
+            else:
+                counts_n = counts_all
 
             text_data.append(counts_n)
    
-    return text_data, minutes_seq
+    return text_data, minutes_seq, counts

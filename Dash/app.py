@@ -553,6 +553,25 @@ app.layout = dbc.Container(
                                     ),
                                 ],
                                 ),
+                                dbc.Tab(label="Animation 2", children=[
+                                    html.Div(style={"height": vertical_space}),
+                                    dbc.Col(
+                                        [
+                                            dbc.Button(
+                                                        "Apply",
+                                                        id="apply_animation2",
+                                                        className="btn-outline-primary",
+                                                    ),
+                                            html.Div(style={"height": vertical_space}),
+                                            dcc.Graph(
+                                                id="animation2",
+                                                figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                                config={"displayModeBar": False},
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                                ),
                             ],
                         ),
                     ],
@@ -864,7 +883,7 @@ def wordcloud_creator(n_clicks, selected_transcript, section, slct_min):
         transcript = transcripts[int(selected_transcript)]
         data = transcript.to_dict("records")
 
-        words, min_seq = split_dialog.split_dialog(data, slct_min)
+        words, min_seq, counts = split_dialog.split_dialog(data, slct_min)
         
         min_rev = list(min_seq)[::-1]
         marks={i-1: str(min_rev[i])+"-"+str(min_rev[i-1])+" min" for i in range(1,len(min_seq))}
@@ -884,7 +903,7 @@ def wordcloud_creator(n_clicks, selected_transcript, section, slct_min):
         transcript = transcripts[int(selected_transcript)]
         data = transcript.to_dict("records")
 
-        words, min_seq = split_dialog.split_dialog(data, slct_min)
+        words, min_seq, counts = split_dialog.split_dialog(data, slct_min)
 
         max_section = len(words)-1
         current_section = abs(section - max_section)
@@ -898,7 +917,6 @@ def wordcloud_creator(n_clicks, selected_transcript, section, slct_min):
 
     return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-
 @app.callback(
     Output(component_id="animation", component_property="figure"),
     Input(component_id="apply_animation", component_property="n_clicks"),
@@ -907,7 +925,7 @@ def wordcloud_creator(n_clicks, selected_transcript, section, slct_min):
 def animation(n_clicks, selected_transcript):
     transcript = transcripts[int(selected_transcript)]
     data = transcript.to_dict("records")
-    words, min_seq = split_dialog.split_dialog(data, 5)
+    words, min_seq, counts = split_dialog.split_dialog(data, 5)
 
     words_pd = pd.DataFrame(columns=["index", "0", "block"])
     for w in range(len(words)):
@@ -919,7 +937,7 @@ def animation(n_clicks, selected_transcript):
     words_pd.drop(words_pd.columns[1], axis = 1, inplace=True)
     words_pd.rename(columns={"block": "block", "index": "word", 0: "count"}, inplace = True)
 
-    scaler = MinMaxScaler(feature_range=(10, 70))
+    scaler = MinMaxScaler(feature_range=(10, 80))
     words_pd["count_scal"] = scaler.fit_transform(words_pd["count"].values.reshape(-1,1))
     words_pd["x-coord"] = 0
     words_pd["y-coord"] = 0
@@ -1020,6 +1038,157 @@ def animation(n_clicks, selected_transcript):
             "mode": "text",
             "text": list(dataset_by_block["word"]),
             "textfont": dict(size = list(dataset_by_block["count_scal"])),
+        }
+        frame["data"].append(data_dict)
+
+        fig_dict["frames"].append(frame)
+        slider_step = {"args": [
+            [block],
+            {"frame": {"duration": 0, "redraw": False},
+            "mode": "immediate",
+            "transition": {"duration": 0}}
+        ],
+            "label": block,
+            "method": "animate"}
+        sliders_dict["steps"].append(slider_step)
+
+    fig_dict["layout"]["sliders"] = [sliders_dict]
+
+    fig = go.Figure(fig_dict)
+
+    return fig
+
+@app.callback(
+    Output(component_id="animation2", component_property="figure"),
+    Input(component_id="apply_animation2", component_property="n_clicks"),
+    Input(component_id="transcript_selector", component_property="value"),
+)
+def animation2(n_clicks, selected_transcript):
+    transcript = transcripts[int(selected_transcript)]
+    data = transcript.to_dict("records")
+    words, min_seq, word_counts = split_dialog.split_dialog(data, 5)
+
+    df = pd.DataFrame(columns=["word", "block", "count", "x", "y"])
+
+    random.x = random.sample(range(len(word_counts)), len(word_counts))
+    random.y = random.sample(range(len(word_counts)), len(word_counts))
+
+    iteration_counter = 0
+    for word, counts in word_counts.items():
+        for i in range(len(counts)):
+            df2 = pd.DataFrame([[word, i, counts[i], random.x[iteration_counter], random.y[iteration_counter]]],
+                               columns=["word", "block", "count", "x", "y"])
+
+            df = df.append(df2, ignore_index=True)
+        iteration_counter += 1
+
+    scaler = MinMaxScaler(feature_range=(1, 60))
+    df["marker_size"] = scaler.fit_transform(df["count"].values.reshape(-1,1))
+
+    scaler2 = MinMaxScaler()
+    df["opacity"] = scaler2.fit_transform(df["count"].values.reshape(-1,1))
+
+    # filtered_data = df[df["word"]=="plan"]
+    # print(filtered_data)
+
+    blocks = df["block"].unique().tolist()
+
+    # make figure
+    fig_dict = {
+        "data": [],
+        "layout": {},
+        "frames": []
+    }
+
+    # fill in most of layout
+    fig_dict["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0}, plot_bgcolor="rgba(0,0,0,0)")
+    fig_dict["layout"]["xaxis"] = {"title": "x", "showgrid": False, 'zeroline': False, 'visible': False}
+    fig_dict["layout"]["yaxis"] = {"title": "y", "showgrid": False, 'zeroline': False, 'visible': False}
+    fig_dict["layout"]["hovermode"] = "closest"
+    fig_dict["layout"]["updatemenus"] = [
+        {
+            "buttons": [
+                {
+                    "args": [None, {"frame": {"duration": 2000, "redraw": False},
+                                    "fromcurrent": True,
+                                    "transition": {"duration": 1000, "easing": "linear"} # animation when clicking play
+                                    }],
+                    "label": "Play",
+                    "method": "animate"
+                },
+                {
+                    "args": [[None], {"frame": {"duration": 0, "redraw": False},
+                                    "mode": "immediate",
+                                    "transition": {"duration": 0}
+                                    }],
+                    "label": "Pause",
+                    "method": "animate"
+                }
+            ],
+            "direction": "left",
+            "pad": {"r": 10, "t": 87},
+            "showactive": False,
+            "type": "buttons",
+            "x": 0.1,
+            "xanchor": "right",
+            "y": 0,
+            "yanchor": "top"
+        }
+    ]
+
+    sliders_dict = {
+        "active": 0,
+        "yanchor": "top",
+        "xanchor": "left",
+        "currentvalue": {
+            "font": {"size": 20},
+            "prefix": "Text block:",
+            "visible": True,
+            "xanchor": "right"
+        },
+        "transition": {"duration": 400, "easing": "linear"},
+        "pad": {"b": 10, "t": 50},
+        "len": 0.9,
+        "x": 0.1,
+        "y": 0,
+        "steps": []
+    }
+
+    # make data
+    block = blocks[0]
+    dataset_by_block = df[df["block"] == block]
+
+    data_dict = {
+        "x": list(dataset_by_block["x"]),
+        "y": list(dataset_by_block["y"]),
+        "mode": "text + markers",
+        "text": list(dataset_by_block["word"]),
+        "textfont": dict(size = list(dataset_by_block["marker_size"])),
+        "marker": {
+            "sizemode": "area",
+            "sizeref": 0.01,
+            "opacity": list(dataset_by_block["opacity"]),
+            "size": list(dataset_by_block["marker_size"])
+        },
+    }
+    fig_dict["data"].append(data_dict)
+
+    for block in blocks:
+        frame = {"data": [], "name": str(block)}
+        dataset_by_block = df[df["block"] == block]
+
+        data_dict = {
+            "x": list(dataset_by_block["x"]),
+            "y": list(dataset_by_block["y"]),
+            "mode": "text + markers",
+            "text": list(dataset_by_block["word"]),
+            "textfont": dict(size = list(dataset_by_block["marker_size"])),
+            "marker": {
+                "sizemode": "area",
+                "sizeref": 0.01,
+                "opacity": list(dataset_by_block["opacity"]),
+                "size": list(dataset_by_block["marker_size"])
+            },
         }
         frame["data"].append(data_dict)
 
