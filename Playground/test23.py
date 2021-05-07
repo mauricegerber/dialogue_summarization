@@ -1,14 +1,7 @@
-thisdict = {
-  "brand": [0,0,0,0,0],
-  "model": [1,2,3,4,5],
-  "year": [0,0,0,0,0]
-}
+a = range(0, 10, 2)
 
-print(thisdict)
+print(a)
 
-thisdict["brand"][0] += 1
+print(list(a))
 
-for key, value in thisdict.items():
-  print(key, value)
-
-print(thisdict)
+print(len(a))

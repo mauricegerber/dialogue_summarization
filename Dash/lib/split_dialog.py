@@ -85,7 +85,7 @@ def split_dialog(data, steps, use_all=True, n=15):
 
             text_data.append(counts_n)
             index_min += 1
-            text = data[i]["Utterance"]
+            text = data[i]["Utterance"].lower()
 
         if i == nrow:
             words = eliminate_stopwords(text)
