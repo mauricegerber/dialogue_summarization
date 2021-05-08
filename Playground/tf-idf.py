@@ -17,22 +17,33 @@ dense = vectors.todense()
 denselist = dense.tolist()
 df = pd.DataFrame(denselist, columns=feature_names)
 
-
+# pd.set_option("display.max_rows", None, "display.max_columns", None)
+# print(df)
 
 # for i in range(len(df.columns)):
 #     for j in range(len(df)):
-#         if df.iloc[j][i] < 0.1:
+#         if df.iloc[j][i] > 0.2:
 #             print(df.columns[i], df.iloc[j][i])
 
 ###################################################################
 # self implemented
+import string
+adj_punctuation = string.punctuation.replace("'", "")
 
-bagOfWordsA = b1[0].split(' ')
-bagOfWordsB = b2[0].split(' ')
-bagOfWordsC = b3[0].split(' ')
-bagOfWordsD = b4[0].split(' ')
-bagOfWordsE = b5[0].split(' ')
-bagOfWordsF = b6[0].split(' ')
+import re
+
+from nltk.corpus import stopwords
+stopwords = stopwords.words('english')
+stopwords.append(["i'll", "don't", "i've", "i'd", "i'm", "can't", "we're", "what's", "that's", "there's", "they're"])
+
+
+# Remove punctuation and create list of words
+bagOfWordsA = b1[0].translate(str.maketrans('', '', adj_punctuation)).split(' ')
+bagOfWordsB = b2[0].translate(str.maketrans('', '', adj_punctuation)).split(' ')
+bagOfWordsC = b3[0].translate(str.maketrans('', '', adj_punctuation)).split(' ')
+bagOfWordsD = b4[0].translate(str.maketrans('', '', adj_punctuation)).split(' ')
+bagOfWordsE = b5[0].translate(str.maketrans('', '', adj_punctuation)).split(' ')
+bagOfWordsF = b6[0].translate(str.maketrans('', '', adj_punctuation)).split(' ')
 
 uniqueWords = set(bagOfWordsA).union(set(bagOfWordsB), set(bagOfWordsC), set(bagOfWordsD), set(bagOfWordsE), set(bagOfWordsF))
 
@@ -57,8 +68,7 @@ for word in bagOfWordsF:
 
 
 
-from nltk.corpus import stopwords
-stopwords.words('english')
+
 
 def computeTF(wordDict, bagOfWords):
     tfDict = {}
@@ -67,7 +77,7 @@ def computeTF(wordDict, bagOfWords):
         tfDict[word] = count / float(bagOfWordsCount)
     return tfDict
 
-
+# Frequency in Block
 tfA = computeTF(numOfWordsA, bagOfWordsA)
 tfB = computeTF(numOfWordsB, bagOfWordsB)
 tfC = computeTF(numOfWordsC, bagOfWordsC)
@@ -75,6 +85,7 @@ tfD = computeTF(numOfWordsD, bagOfWordsD)
 tfE = computeTF(numOfWordsE, bagOfWordsE)
 tfF = computeTF(numOfWordsF, bagOfWordsF)
 
+# log(Frequency in Document)
 def computeIDF(documents):
     import math
     N = len(documents)
@@ -91,6 +102,7 @@ def computeIDF(documents):
 
 idfs = computeIDF([numOfWordsA, numOfWordsB, numOfWordsC, numOfWordsD, numOfWordsE, numOfWordsF])
 
+# Frequency in Block * log(Frequency in Document)
 def computeTFIDF(tfBagOfWords, idfs):
     tfidf = {}
     for word, val in tfBagOfWords.items():
@@ -110,5 +122,8 @@ df = pd.DataFrame([tfidfA, tfidfB, tfidfC, tfidfD, tfidfE, tfidfF])
 
 for i in range(len(df.columns)):
     for j in range(len(df)):
-        if df.iloc[j][i] > 0.01:
+        if df.iloc[j][i] > 0.015:
             print(df.columns[i], df.iloc[j][i])
+
+pd.set_option("display.max_rows", None, "display.max_columns", None)
+#print(df)
