@@ -63,6 +63,8 @@ def split_dialog(data, steps, use_all=True, n=15):
             text += " " + t.lower()
             
         else:
+            print("----")
+            print(text)
             words = eliminate_stopwords(text)
 
             all_unique_words.update(set(words))
@@ -109,5 +111,5 @@ def split_dialog(data, steps, use_all=True, n=15):
                 counts_n = counts_all
 
             text_data.append(counts_n)
-   
+    
     return text_data, minutes_seq, counts
