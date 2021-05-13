@@ -2,10 +2,7 @@ from nltk.corpus import stopwords, wordnet
 from textblob import TextBlob
 import nltk
 from collections import Counter
-import string
-import re
-import math
-adj_punctuation = string.punctuation.replace("'", "")
+
 
 def split_dialog(data, steps, use_all=True, n=15):
     
@@ -51,23 +48,7 @@ def split_dialog(data, steps, use_all=True, n=15):
         nouns_filtered = [x for x in nouns if x not in sw]
         
         return nouns_filtered
-    
-    
-    # def tf(text, index_min):
-    #     bagOfWords = text.translate(str.maketrans('', '', adj_punctuation)).split(' ')
-    #     uniqueWords.update(set(bagOfWords))
-        
-    #     numofwords = dict.fromkeys(uniqueWords, 0)
-    #     for word in bagOfWords:
-    #         numofwords[word] += 1
-    #     print("asdfa")
-    #     # Compute TF
-    #     tfDict = {}
-    #     bagOfWordsCount = len(bagOfWords)
-    #     for word, count in numofwords.items():
-    #         tfDict[word] = count / float(bagOfWordsCount)
 
-    #     return numofwords, tfDict
 
 
     text = ""
@@ -77,10 +58,6 @@ def split_dialog(data, steps, use_all=True, n=15):
     counts = {}
     all_unique_words = set()
     
-    # uniqueWords = set()
-    # list_of_numwords = []
-    # list_of_tfdicts = []
-    blocks = []
     
     for i in range(nrow+1):
         t = data[i]["Utterance"]
@@ -110,10 +87,7 @@ def split_dialog(data, steps, use_all=True, n=15):
             else:
                 counts_n = counts_all
             
-            blocks.append(text)
-            # numwords, tfdicts = tf(text, index_min)
-            # list_of_numwords.append(numwords)
-            # list_of_tfdicts.append(tfdicts)
+            
             text_data.append(counts_n)
             index_min += 1
             text = data[i]["Utterance"].lower()
@@ -139,67 +113,9 @@ def split_dialog(data, steps, use_all=True, n=15):
             else:
                 counts_n = counts_all
             
-            blocks.append(text)
-            # numwords, tfdicts = tf(text, index_min)
-            # list_of_numwords.append(numwords)
-            # list_of_tfdicts.append(tfdicts)
 
             text_data.append(counts_n)
     
 
-    def computeTF(wordDict, bagOfWords):
-        tfDict = {}
-        bagOfWordsCount = len(bagOfWords)
-        for word, count in wordDict.items():
-            tfDict[word] = count / float(bagOfWordsCount)
-        return tfDict
-
-    uniqueWords = set()
-    bagofwords_list = []
-   
-
-    for block in blocks:
-        bagofwords = block.translate(str.maketrans('', '', adj_punctuation)).split(' ')
-        bagofwords.append(bagofwords)
-        uniqueWords.update(set(bagofwords))
-
-    numofwords_list = []
-    for dic in bagofwords_list:
-        numofwords = dict.fromkeys(uniqueWords, 0)
-        for word in dic:
-            numofwords[word] += 1
-        computeTF(numofwords, dic)
-        numofwords_list.append(numofwords)
-
-
-
-    def computeIDF(documents):
-        N = len(documents)
-        idfDict = dict.fromkeys(documents[0].keys(), 0)
-        for document in documents:
-            for word, val in document.items():
-                if val > 0:
-                    idfDict[word] += 1
-        
-        for word, val in idfDict.items():
-            idfDict[word] = math.log(N / float(val))
-        return idfDict
     
-    idfs = computeIDF(numofwords_list)
-
-
-    # Compute TF-IDF
-    list_of_tfidf = []
-    for dictionary in list_of_tfdicts:
-        tfidf = {}
-        for word, val in dictionary.items():
-            tfidf[word] = val * idfs[word]
-        list_of_tfidf.append(tfidf)
-    
-    df = pd.DataFrame(list_of_tfidf)
-
-    tfidf_dict = {}
-    for column in df:
-        tfidf_dict[column] = df[column]
-    print(tfidf_dict)
-    return text_data, minutes_seq, counts, tfidf_dict
+    return text_data, minutes_seq, counts
