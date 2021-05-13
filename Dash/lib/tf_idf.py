@@ -51,8 +51,6 @@ def tf_idf(data, steps):
         return idfDict
     
     
-    
-
     text = ""
     index_min = 0
     blocks = []
@@ -79,7 +77,7 @@ def tf_idf(data, steps):
             list_of_bagofwords.append(bagOfWords)
             uniqueWords.update(set(bagOfWords))
             
-    print(blocks)
+
     list_of_numwords = []
     list_of_tfdicts = []
     for bag in list_of_bagofwords:
@@ -87,10 +85,8 @@ def tf_idf(data, steps):
         list_of_numwords.append(numwords)
         list_of_tfdicts.append(tfdicts)
 
-
     # Compute IDF
     idfs = computeIDF(list_of_numwords)
-
 
     # Compute TF-IDF
     list_of_tfidf = []
@@ -100,12 +96,26 @@ def tf_idf(data, steps):
             tfidf[word] = val * idfs[word]
         list_of_tfidf.append(tfidf)
     
+    df_tf = pd.DataFrame(list_of_tfdicts)
+    df_idf = pd.DataFrame([idfs])
+    df_tfidf = pd.DataFrame(list_of_tfidf)
+
+    # for i in range(len(df.columns)):
+    #     for j in range(len(df)):
+    #         if df.iloc[j][i] > 0.015:
+    #             print(df.columns[i], df.iloc[j][i])
+
+
+    tf_dict = {}
+    for column in df_tf:
+        tf_dict[column] = list(df_tf[column])
     
-    df = pd.DataFrame(list_of_tfidf)
+    idf_dict = {}
+    for column in df_idf:
+        idf_dict[column] = list(df_idf[column])
 
     tfidf_dict = {}
-    for column in df:
-        tfidf_dict[column] = list(df[column])
-    
+    for column in df_tfidf:
+        tfidf_dict[column] = list(df_tfidf[column])
 
-    return tfidf_dict
+    return tf_dict, idf_dict, tfidf_dict, minutes_seq
