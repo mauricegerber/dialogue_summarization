@@ -86,7 +86,7 @@ def compare_wordlist(text_old, text_new):
     words_new = [x for x in w_old + w_new if x not in w_old and x not in sw_lower]
     return words_old, words_new
 
-def create_wordcloud(text, words_old, words_new):
+def create_wordcloud(text, words_old, words_new, key):
     color_to_words = {
         # words below will be colored with a green single color function
         '#00ff00': words_new,
@@ -104,7 +104,7 @@ def create_wordcloud(text, words_old, words_new):
     plt.clf()
     plt.imshow(wordcloud, interpolation="bilinear")
     plt.axis("off")
-    plt.show()
+    plt.savefig("wordcloud_p1{}.png".format(key), dpi = 300)
 
 
 text = ""
@@ -121,13 +121,13 @@ for i in range(nrow+1):
         index_min += 1
         co_wo = compare_wordlist(text_old, text)
         
-        create_wordcloud(text, co_wo[0], co_wo[1])
+        create_wordcloud(text, co_wo[0], co_wo[1], index_min-1)
         text_old = text
         text = transcript.iloc[i]["Utterance"]
 
     if i == nrow:
         co_wo = compare_wordlist(text_old, text)
-        create_wordcloud(text, co_wo[0], co_wo[1])
+        create_wordcloud(text, co_wo[0], co_wo[1], index_min)
 
 
 # a = ["a", "Basil", "cool", "Cool", "harris"]
