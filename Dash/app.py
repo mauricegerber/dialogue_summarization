@@ -295,7 +295,7 @@ app.layout = dbc.Container(
                                     ),
                                 ],
                                 ),
-                                dbc.Tab(label="Texttiling", children=[
+                                dbc.Tab(label="TextTiling", children=[
                                     html.Div(style={"height": vertical_space}),
                                     dbc.Row(
                                         [
@@ -405,45 +405,47 @@ app.layout = dbc.Container(
                                     dcc.Loading(
                                         id="loading1",
                                         color="#1a1a1a",
-                                        children=[dcc.Graph(
-                                            id="texttiling_plot",
-                                            figure={"layout": go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})},
-                                            config={"displayModeBar": False},
-                                            style={"height": "250px"},
-                                        )]
-                                    ),
-                                    html.Div(style={"height": vertical_space}),
-                                    dash_table.DataTable(
-                                        id="texttiling_table",
-                                        columns=[
-                                            {"name": "Start time", "id": "Start time", "presentation": "markdown"},
-                                            {"name": "Keywords", "id": "Keywords", "presentation": "markdown"},
+                                        children=[
+                                            dcc.Graph(
+                                                id="texttiling_plot",
+                                                figure={"layout": go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})},
+                                                config={"displayModeBar": False},
+                                                style={"height": "250px"},
+                                            ),
+                                            html.Div(style={"height": vertical_space}),
+                                            dash_table.DataTable(
+                                                id="texttiling_table",
+                                                columns=[
+                                                    {"name": "Time", "id": "Start time", "presentation": "markdown"},
+                                                    {"name": "Keywords (tf-idf)", "id": "Keywords", "presentation": "markdown"},
+                                                ],
+                                                style_data_conditional=[
+                                                    {"if": {"state": "selected"},
+                                                     "background-color": "white",
+                                                     "border": "1px solid #e9e9e9"},
+                                                ],
+                                                style_header={
+                                                    "text-align": "left",
+                                                    "font-family": "sans-serif",
+                                                    "font-size": "13px",
+                                                    "background-color": "#f7f7f9",
+                                                    "border": "none",
+                                                },
+                                                style_cell={
+                                                    "font-family": "sans-serif",
+                                                    "white-space": "normal", # required for line breaks in utterance column
+                                                    "padding": "15px",
+                                                    "border": "1px solid #e9e9e9",   
+                                                },
+                                                css=[
+                                                    # sum of absolute elements 30+38+30+52+15+38+15+72+15+250+15...+15+21+15
+                                                    {"selector": ".dash-freeze-top",
+                                                     "rule": "max-height: calc(100vh - 621px)"},
+                                                    ],
+                                                fixed_rows={"headers": True},
+                                                page_action="none",
+                                            ),
                                         ],
-                                        style_data_conditional=[
-                                            {"if": {"state": "selected"},
-                                             "background-color": "white",
-                                             "border": "1px solid #e9e9e9"},
-                                        ],
-                                        style_header={
-                                            "text-align": "left",
-                                            "font-family": "sans-serif",
-                                            "font-size": "13px",
-                                            "background-color": "#f7f7f9",
-                                            "border": "none",
-                                        },
-                                        style_cell={
-                                            "font-family": "sans-serif",
-                                            "white-space": "normal", # required for line breaks in utterance column
-                                            "padding": "15px",
-                                            "border": "1px solid #e9e9e9",   
-                                        },
-                                        css=[
-                                            # sum of absolute elements 30+38+30+52+15+38+15+72+15+250+15...+15+21+15
-                                            {"selector": ".dash-freeze-top",
-                                             "rule": "max-height: calc(100vh - 621px)"},
-                                            ],
-                                        fixed_rows={"headers": True},
-                                        page_action="none",
                                     ),
                                 ],
                                 ),
@@ -881,85 +883,68 @@ def serve_static(path):
     State(component_id="block_size_input", component_property="value"),
     State(component_id="n_topics_input", component_property="value"),
 )
-def create_keywords_plot(n_clicks, selected_transcript, selected_language, additional_stopwords,
-                         pseudosentence_length, block_size, n_topics):
+def apply_texttiling(n_clicks, selected_transcript, selected_language, additional_stopwords,
+                     pseudosentence_length, block_size, n_topics):
     if dash.callback_context.triggered[0]["prop_id"] == "apply_texttiling_settings.n_clicks":
         transcript = transcripts[int(selected_transcript)]
-        
+
         additional_stopwords_list = []
         if additional_stopwords != None:
             additional_stopwords_list = additional_stopwords.split(",")
         sw = set(stopwords.words(selected_language) + additional_stopwords_list)
-
-        boundaries, test, depth_scores = texttiling.texttiling(transcript, sw, pseudosentence_length,
-                                                         block_size, n_topics)
-
-        print(test)
+        
+        normalized_boundaries, boundaries, depth_scores = texttiling.texttiling(transcript, sw, pseudosentence_length,
+                                                                                block_size, n_topics)
+        boundaries_timestamps = [transcript["Timestamp"][i] for i in normalized_boundaries]
+        boundaries_time = [transcript["Time"][normalized_boundaries[i-1]] + " - " + transcript["Time"][normalized_boundaries[i]]
+                           for i in range(1, len(normalized_boundaries))]
+        
+        subtopics = []
+        for i in range(1, len(boundaries_timestamps)):
+            transcript_subtopic = transcript[transcript["Timestamp"] < boundaries_timestamps[i]]
+            transcript_subtopic = transcript_subtopic[transcript_subtopic["Timestamp"] >= boundaries_timestamps[i-1]]
+            text = ""
+            for utterance in transcript_subtopic["Utterance"].str.lower():
+                text += utterance
+            subtopics.append(text)
+            
+        df = tfidf.tfidf(subtopics)
+        keywords = []
+        for column in df:
+            keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:10])))
+        
+        data = {"Start time": boundaries_time, "Keywords": keywords}
+        keywords_table = pd.DataFrame(data=data).to_dict("records")
 
         fig = go.Figure()
         fig["layout"] = go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})
-
+        for i in range(len(boundaries)):
+            fig.add_shape(
+                type="line",
+                x0=boundaries[i],
+                y0=0,
+                x1=boundaries[i],
+                y1=max(depth_scores),
+                line=dict(
+                    color="DarkOrange",
+                    width=3,
+                    dash="dot",
+            ))
+            fig.add_annotation(
+                x=boundaries[i],
+                y=max(depth_scores)+0.03,
+                text=transcript["Time"][normalized_boundaries[i+1]],
+                showarrow=False,
+            )
         fig.add_trace(go.Scatter(
             x=list(range(len(depth_scores))),
             y=depth_scores,
             mode="lines"
         ))
-
-        for b in test:
-            fig.add_shape(
-                type="line",
-                x0=b,
-                y0=0,
-                x1=b,
-                y1=max(depth_scores),
-                line=dict(
-                    color="MediumPurple",
-                    width=4,
-                    dash="dot",
-                ))
-        
-        boundaries_timestamps = [transcript["Timestamp"][i+1] for i in boundaries]
-        boundaries_time = [transcript["Time"][i+1] for i in boundaries]
-        boundaries_timestamps.insert(0, 0)
-        boundaries_time.insert(0, "00:00")
-        boundaries_timestamps.append(transcript["Timestamp"][len(transcript)-1])
-        boundaries_time.append(transcript["Time"][len(transcript)-1])
-
-        keywords = []
-        subtexts = []
-        for i in range(1, len(boundaries_timestamps)):
-            transcript_subset = transcript[transcript["Timestamp"] < boundaries_timestamps[i]]
-            transcript_subset = transcript_subset[transcript_subset["Timestamp"] >= boundaries_timestamps[i-1]]
-            text = ""
-            for utterance in transcript_subset["Utterance"].str.lower():
-                text += utterance
-            subtexts.append(text)
-            #keywords.append("asdf")
-
-        df = tfidf.tfidf(subtexts)
-
-        for column in df:
-            keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:10])))
-
-
-
-        # keywords = []
-        # for i in range(1, len(boundaries_timestamps)):
-        #     transcript_subset = transcript[transcript["Timestamp"] < boundaries_timestamps[i]]
-        #     transcript_subset = transcript_subset[transcript_subset["Timestamp"] >= boundaries_timestamps[i-1]]
-        #     text = ""
-        #     for utterance in transcript_subset["Utterance"].str.lower():
-        #         text += utterance
-        #     kws = kw_extractor.extract_keywords(text, stop_words = sw, diversity=1, use_mmr=True, keyphrase_ngram_range=(2,2))
-        #     kws = [w for w, v in kws]
-        #     keywords.append(", ".join(kws))
-
-        data = {"Start time": boundaries_time[:-1],
-                "Keywords": keywords}
-
-        keywords = pd.DataFrame(data = data)
-
-        keywords_table = keywords.to_dict("records")
+        fig.update_layout(
+            xaxis_title="Gap between pseudosentences",
+            yaxis_title="Depth score",
+        )
 
         return fig, keywords_table
 

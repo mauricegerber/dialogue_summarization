@@ -3,7 +3,7 @@ import math
 from nltk.tokenize import word_tokenize
 import pandas as pd
 
-# https://towardsdatascience.com/natural-language-processing-feature-engineering-using-tf-idf-e8b9d00e7e76
+# based on https://towardsdatascience.com/natural-language-processing-feature-engineering-using-tf-idf-e8b9d00e7e76
 
 def tfidf(documents):
 

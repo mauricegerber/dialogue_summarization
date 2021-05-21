@@ -136,12 +136,14 @@ def texttiling(transcript, stopwords, w, k, n, min_boundary_distance=20):
         if ts.index in boundaries:
             boundaries_last_word_index.append(ts.word_list[-1][1])
 
-    normalized_boundaries = []
+    normalized_boundaries = [0]
     for bi in boundaries_last_word_index:
         # calculate difference between current boundaries_last_word_index (bi) and all utterance_breaks (ub)
         diff = list(map(lambda ub: bi - ub, utterance_breaks))
         # get index of utterance where the boundaries_last_word_index is in-between
         smallest_positive_value_index = max([i for i in range(len(diff)) if diff[i] > 0])
-        normalized_boundaries.append(smallest_positive_value_index)
+        # append index of following utterance
+        normalized_boundaries.append(smallest_positive_value_index+1)
+    normalized_boundaries.append(len(transcript)-1)
 
     return normalized_boundaries, boundaries, depth_scores
