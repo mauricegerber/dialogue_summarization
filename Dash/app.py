@@ -26,12 +26,15 @@ from keybert import KeyBERT
 kw_extractor = KeyBERT('distilbert-base-nli-mean-tokens')
 from sklearn.preprocessing import MinMaxScaler
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 sys.path.insert(0, "./lib")
 import texttiling
 import create_pdf
 import split_dialog
 import wordcloud_pl
 import tf_idf
+import tfidf
 
 # TO DO
 # erstellte PDF direkt nach neuem generieren löschen
@@ -319,7 +322,7 @@ app.layout = dbc.Container(
                                                         placeholder="Enter additional stopwords separated by comma",
                                                     ),
                                                 ],
-                                                style={"margin": "0% 5% 0%"},
+                                                style={"margin": "0% 3% 0%"},
                                             ),
                                             dbc.Col(
                                                 [
@@ -328,8 +331,8 @@ app.layout = dbc.Container(
                                                         [
                                                             dbc.Col(
                                                                 [
-                                                                    html.Div("Pseudosentence length"),
-                                                                    html.Div("(10 to 30 words)"),
+                                                                    html.Div("Pseudosentence"),
+                                                                    html.Div("length w"),
                                                                 ],
                                                                 width="auto",
                                                             ),
@@ -338,8 +341,6 @@ app.layout = dbc.Container(
                                                                     dbc.Input(
                                                                         id="pseudosentence_length_input",
                                                                         type="number",
-                                                                        min=10,
-                                                                        max=30,
                                                                         step=1,
                                                                         value=20,
                                                                     ),
@@ -348,18 +349,15 @@ app.layout = dbc.Container(
                                                             ),
                                                             dbc.Col(
                                                                 [
-                                                                    html.Div("Block comparison window size"),
-                                                                    html.Div("(5 to 30 pseudosentences)"),
+                                                                    html.Div("Block size k"),
                                                                 ],
                                                                 width="auto",
                                                             ),
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
-                                                                        id="window_size_input",
+                                                                        id="block_size_input",
                                                                         type="number",
-                                                                        min=5,
-                                                                        max=30,
                                                                         step=1,
                                                                         value=10,
                                                                     ),
@@ -368,20 +366,18 @@ app.layout = dbc.Container(
                                                             ),
                                                             dbc.Col(
                                                                 [
-                                                                    html.Div("Cut-off"),
-                                                                    html.Div("(y-axis)"),
+                                                                    html.Div("Number of"),
+                                                                    html.Div("subtopics n"),
                                                                 ],
                                                                 width="auto",
                                                             ),
                                                             dbc.Col(
                                                                 [
                                                                     dbc.Input(
-                                                                        id="cutoff_input",
+                                                                        id="n_topics_input",
                                                                         type="number",
-                                                                        min=2,
-                                                                        max=10,
                                                                         step=1,
-                                                                        value=2,
+                                                                        value=3,
                                                                     ),
                                                                 ],
                                                                 width="auto",
@@ -390,7 +386,7 @@ app.layout = dbc.Container(
                                                     ),
                                                 ],
                                                 width="auto",
-                                                style={"margin": "0% 5% 0%"},
+                                                style={"margin": "0% 3% 0% 0%"},
                                             ),
                                             dbc.Col(
                                                 [
@@ -406,28 +402,27 @@ app.layout = dbc.Container(
                                         ],
                                     ),
                                     html.Div(style={"height": vertical_space}),
-                                    
                                     dcc.Loading(
-                                        id="loading-1",
+                                        id="loading1",
                                         color="#1a1a1a",
                                         children=[dcc.Graph(
-                                            id="keywords_plot",
-                                            figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                            id="texttiling_plot",
+                                            figure={"layout": go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})},
                                             config={"displayModeBar": False},
                                             style={"height": "250px"},
                                         )]
                                     ),
                                     html.Div(style={"height": vertical_space}),
                                     dash_table.DataTable(
-                                        id="keywords_table",
+                                        id="texttiling_table",
                                         columns=[
                                             {"name": "Start time", "id": "Start time", "presentation": "markdown"},
                                             {"name": "Keywords", "id": "Keywords", "presentation": "markdown"},
                                         ],
                                         style_data_conditional=[
                                             {"if": {"state": "selected"},
-                                                "background-color": "white",
-                                                "border": "1px solid #e9e9e9"},
+                                             "background-color": "white",
+                                             "border": "1px solid #e9e9e9"},
                                         ],
                                         style_header={
                                             "text-align": "left",
@@ -443,9 +438,9 @@ app.layout = dbc.Container(
                                             "border": "1px solid #e9e9e9",   
                                         },
                                         css=[
-                                            # sum of absolute elements 30+38+30+52+15+38+15+72+15+300+15...+30+21+15
+                                            # sum of absolute elements 30+38+30+52+15+38+15+72+15+250+15...+15+21+15
                                             {"selector": ".dash-freeze-top",
-                                                "rule": "max-height: calc(100vh - 621px)"},
+                                             "rule": "max-height: calc(100vh - 621px)"},
                                             ],
                                         fixed_rows={"headers": True},
                                         page_action="none",
@@ -875,51 +870,53 @@ def serve_static(path):
         os.path.join(".", 'downloadable'), path
     )
 
-
 @app.callback(
-    Output(component_id="keywords_plot", component_property="figure"),
-    Output(component_id="keywords_table", component_property="data"),
+    Output(component_id="texttiling_plot", component_property="figure"),
+    Output(component_id="texttiling_table", component_property="data"),
     Input(component_id="apply_texttiling_settings", component_property="n_clicks"),
     State(component_id="transcript_selector", component_property="value"),
     State(component_id="language_radio_button", component_property="value"),
     State(component_id="stopwords_input", component_property="value"),
     State(component_id="pseudosentence_length_input", component_property="value"),
-    State(component_id="window_size_input", component_property="value"),
-    State(component_id="cutoff_input", component_property="value"),
+    State(component_id="block_size_input", component_property="value"),
+    State(component_id="n_topics_input", component_property="value"),
 )
-def create_keywords_plot(n_clicks, selected_transcript, selected_language,
-                         additional_stopwords, pseudosentence_length, window_size, cutoff):
+def create_keywords_plot(n_clicks, selected_transcript, selected_language, additional_stopwords,
+                         pseudosentence_length, block_size, n_topics):
     if dash.callback_context.triggered[0]["prop_id"] == "apply_texttiling_settings.n_clicks":
         transcript = transcripts[int(selected_transcript)]
-
-        # print(selected_language)
-        # print(selected_preprocessing)
-        # print(additional_stopwords)
-        # print(pseudosentence_length)
-        # print(window_size)
-        # print(cutoff)
         
         additional_stopwords_list = []
         if additional_stopwords != None:
             additional_stopwords_list = additional_stopwords.split(",")
         sw = set(stopwords.words(selected_language) + additional_stopwords_list)
 
-        boundaries, depth_scores = texttiling.texttiling(transcript, sw, pseudosentence_length,
-                                                         window_size, cutoff)
+        boundaries, test, depth_scores = texttiling.texttiling(transcript, sw, pseudosentence_length,
+                                                         block_size, n_topics)
+
+        print(test)
 
         fig = go.Figure()
+        fig["layout"] = go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})
 
         fig.add_trace(go.Scatter(
             x=list(range(len(depth_scores))),
             y=depth_scores,
             mode="lines"
         ))
-        fig["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})
 
-        fig.update_layout(
-            xaxis_title="Gap between pseudosentences",
-            yaxis_title="Depth score",
-        )
+        for b in test:
+            fig.add_shape(
+                type="line",
+                x0=b,
+                y0=0,
+                x1=b,
+                y1=max(depth_scores),
+                line=dict(
+                    color="MediumPurple",
+                    width=4,
+                    dash="dot",
+                ))
         
         boundaries_timestamps = [transcript["Timestamp"][i+1] for i in boundaries]
         boundaries_time = [transcript["Time"][i+1] for i in boundaries]
@@ -929,15 +926,33 @@ def create_keywords_plot(n_clicks, selected_transcript, selected_language,
         boundaries_time.append(transcript["Time"][len(transcript)-1])
 
         keywords = []
+        subtexts = []
         for i in range(1, len(boundaries_timestamps)):
             transcript_subset = transcript[transcript["Timestamp"] < boundaries_timestamps[i]]
             transcript_subset = transcript_subset[transcript_subset["Timestamp"] >= boundaries_timestamps[i-1]]
             text = ""
             for utterance in transcript_subset["Utterance"].str.lower():
                 text += utterance
-            kws = kw_extractor.extract_keywords(text, stop_words = sw, diversity=1, use_mmr=True, keyphrase_ngram_range=(2,2))
-            kws = [w for w, v in kws]
-            keywords.append(", ".join(kws))
+            subtexts.append(text)
+            #keywords.append("asdf")
+
+        df = tfidf.tfidf(subtexts)
+
+        for column in df:
+            keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:10])))
+
+
+
+        # keywords = []
+        # for i in range(1, len(boundaries_timestamps)):
+        #     transcript_subset = transcript[transcript["Timestamp"] < boundaries_timestamps[i]]
+        #     transcript_subset = transcript_subset[transcript_subset["Timestamp"] >= boundaries_timestamps[i-1]]
+        #     text = ""
+        #     for utterance in transcript_subset["Utterance"].str.lower():
+        #         text += utterance
+        #     kws = kw_extractor.extract_keywords(text, stop_words = sw, diversity=1, use_mmr=True, keyphrase_ngram_range=(2,2))
+        #     kws = [w for w, v in kws]
+        #     keywords.append(", ".join(kws))
 
         data = {"Start time": boundaries_time[:-1],
                 "Keywords": keywords}

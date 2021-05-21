@@ -166,3 +166,7 @@ def texttiling(transcript, stopwords, w, k, n, min_boundary_distance=20):
     #print(normalized_boundaries)
 
     return normalized_boundaries, depth_scores
+
+
+
+    
