@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import CountVectorizer
 import string
 import random
+from nltk.tokenize import sent_tokenize
 
 import numpy as np
 from numpy.linalg import norm
@@ -26,7 +27,7 @@ def get_penalty(docmats, segment_len):
         max_splits = int(avg_n_seg) + (random.random() < avg_n_seg % 1) - 1 # random.random() = runif [0, 1]
         if max_splits >= 1:
             seg = split_greedy(docmat, max_splits=max_splits)
-            print(seg)
+            # print(seg.splits)
             if seg.min_gain < np.inf:
                 penalties.append(seg.min_gain)
     if len(penalties) > 0:
@@ -171,9 +172,13 @@ transcript = pd.read_csv(
     names=["Speaker", "Time", "End time", "Duration", "Utterance"],
     usecols=["Speaker", "Time", "Utterance"]
 )
+utterance_breaks = [0]
 text = ""
 for utterance in transcript["Utterance"].str.lower():
+    sentenced_utterance = sent_tokenize(utterance)
+    utterance_breaks.append(utterance_breaks[-1] + len(sentenced_utterance))
     text += utterance + " "
+del utterance_breaks[0]
 
 wrdvec_path = base_path + '/wrdvecs.bin'
 model = word2vec.load(wrdvec_path)
@@ -186,9 +191,9 @@ sentence_tokenizer = SimpleSentenceTokenizer()
 from textsplit.tools import get_segments
 from textsplit.algorithm import split_optimal, get_total
 
-segment_len = 60  # segment target length in sentences
+segment_len = 30 # segment target length in sentences
 
-sentenced_text = sentence_tokenizer(text) # list of sentences (137 sentences)
+sentenced_text = sent_tokenize(text) # list of sentences (137 sentences)
 vecr = CountVectorizer(vocabulary=wrdvecs.index) # the vocabulary are all words from the word2vec model (71291 words)
 sentence_vectors = vecr.transform(sentenced_text).dot(wrdvecs) # result is a matrix with 137 rows and 200 columns
 # vecr.transform(sentenced_text) returns sparse matrix with 137 rows and 71291 columns
@@ -201,17 +206,14 @@ sentence_vectors = vecr.transform(sentenced_text).dot(wrdvecs) # result is a mat
 
 # penalty is the minimum gain for a given number of max_splits
 penalty = get_penalty([sentence_vectors], segment_len)
-print('penalty %4.2f' % penalty)
+# print('penalty %4.2f' % penalty)
 
 optimal_segmentation = split_optimal(sentence_vectors, penalty, seg_limit=250)
-print(optimal_segmentation)
 segmented_text = get_segments(sentenced_text, optimal_segmentation)
-
-print('%d sentences, %d segments, avg %4.2f sentences per segment' % (
-    len(sentenced_text), len(segmented_text), len(sentenced_text) / len(segmented_text)))
+# split 13 means that the first 13 sentences belong to the first segment
 
 greedy_segmentation = split_greedy(sentence_vectors, max_splits=len(optimal_segmentation.splits))
-print(greedy_segmentation)
+# print(greedy_segmentation.splits)
 greedy_segmented_text = get_segments(sentenced_text, greedy_segmentation)
 lengths_optimal = [len(segment) for segment in segmented_text for sentence in segment]
 lengths_greedy = [len(segment) for segment in greedy_segmented_text for sentence in segment]
@@ -221,7 +223,14 @@ df.plot.line(figsize=(18, 3), title='Segment lenghts over text')
 #df.plot.hist(bins=30, alpha=0.5, figsize=(10, 3), title='Histogram of segment lengths')
 plt.show()
 
-totals = [get_total(sentence_vectors, seg.splits, penalty) 
-          for seg in [optimal_segmentation, greedy_segmentation]]
-print('optimal score %4.2f, greedy score %4.2f' % tuple(totals))
-print('ratio of scores %5.4f' % (totals[0] / totals[1]))
+normalized_splits = [0]
+for split in optimal_segmentation.splits:
+    diff = list(map(lambda ub: split - ub, utterance_breaks))
+    smallest_positive_value_index = max([i for i in range(len(diff)) if diff[i] > 0])
+    normalized_splits.append(smallest_positive_value_index+1)
+#normalized_splits.append(len(transcript)-1)
+
+normalized_splits = list(set(normalized_splits))
+normalized_splits.sort()
+
+print(normalized_splits)

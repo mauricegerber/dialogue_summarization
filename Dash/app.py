@@ -30,15 +30,12 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 sys.path.insert(0, "./lib")
 import texttiling
+import textsplit_
 import create_pdf
 import split_dialog
 import wordcloud_pl
 import tf_idf
 import tfidf
-
-# TO DO
-# erstellte PDF direkt nach neuem generieren löschen
-# Transkribtname in Dateiname
 
 # https://bootswatch.com/lux/
 BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/lux/bootstrap.min.css"
@@ -46,24 +43,27 @@ app = dash.Dash(external_stylesheets=[BS])
 app.title = "Dialog Analyzer"
 
 def calculate_timestamps(transcript):
-    ft = datetime.strptime("00:00:00", "%H:%M:%S")
+    first_timestamp = datetime.strptime("00:00:00", "%H:%M:%S")
     timestamps_hms = []
     timestamps_s = []
     # time column has format %M:%S and minutes can exceed 59
     # e.g. time value of 65:46 corresponds to 01:05:46 in %H:%M:%S format
-    for t in transcript["Time"]:
-        t = t.split(":")
-        h = math.floor(int(t[0]) / 60)
-        m = int(t[0]) % 60
-        s = t[1]
+    for time in transcript["Time"]:
+        time = time.split(":")
+        h = math.floor(int(time[0]) / 60)
+        m = int(time[0]) % 60
+        s = time[1]
         if s == "60": s = "59" # seconds can have value of 60 which would be non-convertible
         hms = ":".join([str(h), str(m), s])
-        ct = datetime.strptime(hms, "%H:%M:%S")
-        if ct.hour == 0:
-            timestamps_hms.append("{:02d}:{:02d}".format(ct.minute, ct.second))
+        current_timestamp = datetime.strptime(hms, "%H:%M:%S")
+        if current_timestamp.hour == 0:
+            timestamps_hms.append("{:02d}:{:02d}".format(current_timestamp.minute,
+                                                         current_timestamp.second))
         else:
-            timestamps_hms.append("{:02d}:{:02d}:{:02d}".format(ct.hour, ct.minute, ct.second))
-        timestamps_s.append(int((ct - ft).total_seconds()))
+            timestamps_hms.append("{:02d}:{:02d}:{:02d}".format(current_timestamp.hour,
+                                                                current_timestamp.minute,
+                                                                current_timestamp.second))
+        timestamps_s.append(int((current_timestamp - first_timestamp).total_seconds()))
     transcript["Time"] = timestamps_hms
     transcript["Timestamp"] = timestamps_s
 
@@ -72,9 +72,9 @@ transcript_files = os.listdir(transcripts_dir)
 initial_transcript_index = 0
 
 transcripts = []
-for f in transcript_files:
+for file in transcript_files:
     transcript = pd.read_csv(
-        filepath_or_buffer=transcripts_dir + f,
+        filepath_or_buffer=transcripts_dir + file,
         header=0,
         names=["Speaker", "Time", "End time", "Duration", "Utterance"],
         usecols=["Speaker", "Time", "Utterance"]
@@ -162,10 +162,10 @@ app.layout = dbc.Container(
                                     "Download",
                                     id="pdf_download_button",
                                     className="btn-secondary disabled",
-                                    disabled = True
-                                ) 
-                            ]
-                        )
+                                    disabled = True,
+                                ),
+                            ],
+                        ),
                     ],
                     width="auto",
                 ),
@@ -296,6 +296,35 @@ app.layout = dbc.Container(
                                 ],
                                 ),
                                 dbc.Tab(label="TextTiling", children=[
+                                    html.Div(style={"height": vertical_space}),
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    html.Div(
+                                                        children=[
+                                                            html.Span("This tab provides an implementation of the TextTiling algorithm proposed by Marti A. Hearst "),
+                                                            html.A("[Link to paper].", href="https://www.aclweb.org/anthology/J97-1003.pdf", target="_blank"),
+                                                            html.Span(" The cues for detecting major subtopic shifts are patterns of lexical co-occurrence."),
+                                                            html.Span(" The radio button"),
+                                                            html.I(" Language"),
+                                                            html.Span(" is to set the list of stop words to the corresponding language."),
+                                                            html.Span(" Additional stop words can be provided."),
+                                                            html.Span(" Stop words only affect the TextTiling algorithm and not the tf-idf keyword extraction."),
+                                                            html.Span(" The parameters"),
+                                                            html.I(" Pseudeosentence length w"),
+                                                            html.Span(","),
+                                                            html.I(" Block size k"),
+                                                            html.Span(" and"),
+                                                            html.I(" Number of subtopics n"),
+                                                            html.Span(" can be adjusted to fine-tune the TextTiling algorithm."),
+                                                            html.Span(" For a detailed discussion on the effects of these parameters please refer to chapter X in our paper [link not yet available]."),
+                                                        ],
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                    ),
                                     html.Div(style={"height": vertical_space}),
                                     dbc.Row(
                                         [
@@ -438,9 +467,125 @@ app.layout = dbc.Container(
                                                     "border": "1px solid #e9e9e9",   
                                                 },
                                                 css=[
-                                                    # sum of absolute elements 30+38+30+52+15+38+15+72+15+250+15...+15+21+15
+                                                    # sum of absolute elements 30+38+30+52+15+38+15+63+15+72+15+250+15...+15+21+15
                                                     {"selector": ".dash-freeze-top",
-                                                     "rule": "max-height: calc(100vh - 621px)"},
+                                                     "rule": "max-height: calc(100vh - 699px)"},
+                                                    ],
+                                                fixed_rows={"headers": True},
+                                                page_action="none",
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                                ),
+                                dbc.Tab(label="TextSplit", children=[
+                                    html.Div(style={"height": vertical_space}),
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    html.Div(
+                                                        children=[
+                                                            html.Span("This tab provides an implementation of a text split algorithm by Christoph Schock "),
+                                                            html.A("[Link to GitHub]", href="https://github.com/chschock/textsplit", target="_blank"),
+                                                            html.Span(" which is based on a paper by Alexander A. Alemi and Paul Ginsparg "),
+                                                            html.A("[Link to paper].", href="https://arxiv.org/pdf/1503.05543.pdf", target="_blank"),
+                                                            html.Span(" The algorithm uses word embeddings to find subtopics where the boundaries are chosen such that the subtopics are coherent."),
+                                                            html.Span(" This coherence can be described as accumulated weighted cosine similarity of the words of a subtopic to the mean vector of that subtopic."),
+                                                            html.Span(" The parameter"),
+                                                            html.I(" Segment length"),
+                                                            html.Span(" can be adjusted to fine-tune the algorithm and affect the number of subtopics it detects."),
+                                                            html.Span(" For a detailed discussion of the algorithm please refer to chapter X in our paper [link not yet available]."),
+                                                        ],
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                    ),
+                                    html.Div(style={"height": vertical_space}),
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    html.H5("Parameters"),
+                                                    dbc.Row(
+                                                        [
+                                                            dbc.Col(
+                                                                [
+                                                                    html.Div("Segment length"),
+                                                                ],
+                                                                width="auto",
+                                                            ),
+                                                            dbc.Col(
+                                                                [
+                                                                    dbc.Input(
+                                                                        id="segment_length_input",
+                                                                        type="number",
+                                                                        step=1,
+                                                                        value=30,
+                                                                    ),
+                                                                ],
+                                                                width="auto",
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
+                                                width="auto",
+                                                #style={"margin": "0% 3% 0% 0%"},
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    html.Div(style={"height": "27px"}),
+                                                    dbc.Button(
+                                                        "Apply",
+                                                        id="apply_textsplit_settings",
+                                                        className="btn-outline-primary",
+                                                    ),
+                                                ],
+                                                width="auto",
+                                            ),
+                                        ],
+                                    ),
+                                    html.Div(style={"height": vertical_space}),
+                                    dcc.Loading(
+                                        id="loading2",
+                                        color="#1a1a1a",
+                                        children=[
+                                            dcc.Graph(
+                                                id="textsplit_plot",
+                                                figure={"layout": go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})},
+                                                config={"displayModeBar": False},
+                                                style={"height": "250px"},
+                                            ),
+                                            html.Div(style={"height": vertical_space}),
+                                            dash_table.DataTable(
+                                                id="textsplit_table",
+                                                columns=[
+                                                    {"name": "Time", "id": "Start time", "presentation": "markdown"},
+                                                    {"name": "Keywords (tf-idf)", "id": "Keywords", "presentation": "markdown"},
+                                                ],
+                                                style_data_conditional=[
+                                                    {"if": {"state": "selected"},
+                                                     "background-color": "white",
+                                                     "border": "1px solid #e9e9e9"},
+                                                ],
+                                                style_header={
+                                                    "text-align": "left",
+                                                    "font-family": "sans-serif",
+                                                    "font-size": "13px",
+                                                    "background-color": "#f7f7f9",
+                                                    "border": "none",
+                                                },
+                                                style_cell={
+                                                    "font-family": "sans-serif",
+                                                    "white-space": "normal", # required for line breaks in utterance column
+                                                    "padding": "15px",
+                                                    "border": "1px solid #e9e9e9",   
+                                                },
+                                                css=[
+                                                    # sum of absolute elements 30+38+30+52+15+38+15+63+15+72+15+250+15...+15+21+15
+                                                    {"selector": ".dash-freeze-top",
+                                                     "rule": "max-height: calc(100vh - 699px)"},
                                                     ],
                                                 fixed_rows={"headers": True},
                                                 page_action="none",
@@ -944,6 +1089,74 @@ def apply_texttiling(n_clicks, selected_transcript, selected_language, additiona
         fig.update_layout(
             xaxis_title="Gap between pseudosentences",
             yaxis_title="Depth score",
+        )
+
+        return fig, keywords_table
+
+    return dash.no_update, dash.no_update
+
+@app.callback(
+    Output(component_id="textsplit_plot", component_property="figure"),
+    Output(component_id="textsplit_table", component_property="data"),
+    Input(component_id="apply_textsplit_settings", component_property="n_clicks"),
+    State(component_id="transcript_selector", component_property="value"),
+    State(component_id="segment_length_input", component_property="value"),
+)
+def apply_textsplit(n_clicks, selected_transcript, segment_length):
+    if dash.callback_context.triggered[0]["prop_id"] == "apply_textsplit_settings.n_clicks":
+        transcript = transcripts[int(selected_transcript)]
+        
+        normalized_splits, splits, lengths_optimal = textsplit_.textsplit(transcript, segment_length)
+
+        boundaries_timestamps = [transcript["Timestamp"][i] for i in normalized_splits]
+        boundaries_time = [transcript["Time"][normalized_splits[i-1]] + " - " + transcript["Time"][normalized_splits[i]]
+                           for i in range(1, len(normalized_splits))]
+        
+        subtopics = []
+        for i in range(1, len(boundaries_timestamps)):
+            transcript_subtopic = transcript[transcript["Timestamp"] < boundaries_timestamps[i]]
+            transcript_subtopic = transcript_subtopic[transcript_subtopic["Timestamp"] >= boundaries_timestamps[i-1]]
+            text = ""
+            for utterance in transcript_subtopic["Utterance"].str.lower():
+                text += utterance
+            subtopics.append(text)
+            
+        df = tfidf.tfidf(subtopics)
+        keywords = []
+        for column in df:
+            keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:10])))
+        
+        data = {"Start time": boundaries_time, "Keywords": keywords}
+        keywords_table = pd.DataFrame(data=data).to_dict("records")
+
+        fig = go.Figure()
+        fig["layout"] = go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})
+        # for i in range(len(boundaries)):
+        #     fig.add_shape(
+        #         type="line",
+        #         x0=boundaries[i],
+        #         y0=0,
+        #         x1=boundaries[i],
+        #         y1=max(depth_scores),
+        #         line=dict(
+        #             color="DarkOrange",
+        #             width=3,
+        #             dash="dot",
+        #     ))
+        #     fig.add_annotation(
+        #         x=boundaries[i],
+        #         y=max(depth_scores)+0.03,
+        #         text=transcript["Time"][normalized_boundaries[i+1]],
+        #         showarrow=False,
+        #     )
+        fig.add_trace(go.Scatter(
+            x=list(range(len(lengths_optimal))),
+            y=lengths_optimal,
+            mode="lines"
+        ))
+        fig.update_layout(
+            xaxis_title="Sentences",
+            yaxis_title="Subtopic length",
         )
 
         return fig, keywords_table
