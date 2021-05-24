@@ -3,7 +3,6 @@ import re
 import math
 import pandas as pd
 
-
 def tf_idf(data, steps):
     adj_punctuation = string.punctuation.replace("'", "")
 

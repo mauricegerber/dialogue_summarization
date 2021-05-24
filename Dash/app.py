@@ -22,11 +22,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from nltk.corpus import stopwords
-from keybert import KeyBERT
-kw_extractor = KeyBERT('distilbert-base-nli-mean-tokens')
 from sklearn.preprocessing import MinMaxScaler
 
-from sklearn.feature_extraction.text import TfidfVectorizer
+from summa import keywords as summa_keywords
+from yake import KeywordExtractor
+from keybert import KeyBERT
 
 sys.path.insert(0, "./lib")
 import texttiling
@@ -255,7 +255,7 @@ app.layout = dbc.Container(
                                         columns=[
                                             {"name": "Speaker", "id": "Speaker", "presentation": "markdown"},
                                             {"name": "Time", "id": "Time", "presentation": "markdown"},
-                                            {"name": "Utterance", "id": "Utterance", "presentation": "markdown"}
+                                            {"name": "Utterance", "id": "Utterance", "presentation": "markdown"},
                                         ],
                                         data=initial_transcript[["Speaker", "Time", "Utterance"]].to_dict("records"),
                                         style_data_conditional=[
@@ -292,6 +292,59 @@ app.layout = dbc.Container(
                                             ],
                                         fixed_rows={"headers": True},
                                         page_action="none",
+                                    ),
+                                ],
+                                ),
+                                dbc.Tab(label="Keyword extraction", children=[
+                                    html.Div(style={"height": vertical_space}),
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    html.Div(
+                                                        children=[
+                                                            html.Span("This tab provides implementations of several keyword extraction algorithms."),
+                                                            html.Span(" The keywords are displayed in the table in Tab 1."),
+                                                            html.Span(" As this tab is quite empty at the moment, more information or settings might get added."),
+                                                            html.Span(" Note that KeyBERT takes quite a while to compute compared to the others.")
+
+                                                        ],
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                    ),
+                                    html.Div(style={"height": vertical_space}),
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    dbc.Checklist(
+                                                        id="keyword_extraction_method_selector",
+                                                        options=[
+                                                            {"label": "TF-IDF", "value": "tf-idf"},
+                                                            {"label": "TextRank", "value": "textrank"},
+                                                            {"label": "YAKE!", "value": "yake"},
+                                                            {"label": "BERT", "value": "bert"},
+                                                        ],
+                                                        value=[],
+                                                        switch=True,
+                                                    ),
+                                                ],
+                                                width="auto",
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    html.Div(style={"height": "27px"}),
+                                                    dbc.Button(
+                                                        "Apply",
+                                                        id="apply_keyword_extraction_settings",
+                                                        className="btn-outline-primary",
+                                                    ),
+                                                ],
+                                                width="auto",
+                                            ),
+                                        ],
                                     ),
                                 ],
                                 ),
@@ -881,7 +934,9 @@ def upload_and_delete_transcripts(list_of_contents, n_clicks_delete, n_clicks_mo
             dash.no_update, False, dash.no_update, dash.no_update)
 
 @app.callback(
+    Output(component_id="transcript_table", component_property="columns"),
     Output(component_id="transcript_table", component_property="data"),
+    Output(component_id="transcript_table", component_property="style_cell_conditional"),
     Output(component_id="transcript_table", component_property="css"),
     Output(component_id="speaker_selector", component_property="options"),
     Output(component_id="speaker_selector", component_property="value"),
@@ -898,9 +953,14 @@ def upload_and_delete_transcripts(list_of_contents, n_clicks_delete, n_clicks_mo
     Input(component_id="end_time_input", component_property="value"),
     Input(component_id="timeline_slider", component_property="value"),
     Input(component_id="search_input", component_property="value"),
+    Input(component_id="apply_keyword_extraction_settings", component_property="n_clicks"),
+    State(component_id="keyword_extraction_method_selector", component_property="value"),
+    State(component_id="transcript_table", component_property="columns"),
+    State(component_id="transcript_table", component_property="style_cell_conditional"),
 )
 def update_transcript_table_and_filters(selected_transcript, selected_speaker, selected_start_time,
-                                        selected_end_time, selected_timeline, search_term):
+                                        selected_end_time, selected_timeline, search_term,
+                                        n_clicks, selected_methods, current_columns, current_style):
     transcript = transcripts[int(selected_transcript)]
 
     timeline_min = transcript["Timestamp"][0]
@@ -914,6 +974,19 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
     if trigger == "transcript_selector.value":
         speakers = transcript["Speaker"].unique()
         transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
+        columns = [
+            {"name": "Speaker", "id": "Speaker", "presentation": "markdown"},
+            {"name": "Time", "id": "Time", "presentation": "markdown"},
+            {"name": "Utterance", "id": "Utterance", "presentation": "markdown"},
+        ]
+        style_cell_conditional=[
+            {"if": {"column_id": "Speaker"},
+             "width": "30px"},
+            {"if": {"column_id": "Time"},
+             "width": "30px"},
+            {"if": {"column_id": "Utterance"},
+             "width": "800px"},
+        ]
 
         # set height of transcript table depending on height of filter section
         if len(speakers) == 2:
@@ -925,10 +998,103 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
         transcript_table_height = 30+38+30+52+15+38+15+filter_section_height+15+15+21+15
         css_code = "max-height: calc(100vh - " + str(transcript_table_height) + "px)"
         
-        return (transcript_table, [{"selector": ".dash-freeze-top", "rule": css_code}],
+        return (columns, transcript_table, style_cell_conditional, [{"selector": ".dash-freeze-top", "rule": css_code}],
                 [{"label": i, "value": i} for i in sorted(speakers, key=str.lower)], speakers,
                 "00:00", time.strftime("%H:%M", time.gmtime(timeline_max)),
                 timeline_min, timeline_max, [timeline_min, timeline_max], marks, None)
+
+    if trigger == "apply_keyword_extraction_settings.n_clicks":
+        column_names = [column["name"] for column in current_columns]
+        width = "50px"
+
+        if "tf-idf" in selected_methods and "tf-idf" not in column_names:
+            documents = transcript["Utterance"].str.lower().tolist()
+            df = tfidf.tfidf(documents)
+            tf_idf_keywords = []
+            for column in df:
+                tf_idf_keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:3])))
+            transcript["tf-idf"] = tf_idf_keywords
+            current_columns.append({"name": "tf-idf", "id": "tf-idf", "presentation": "markdown"})
+            column_names.append("tf-idf")
+            current_style.append({"if": {"column_id": "tf-idf"}, "width": width})
+
+        if "tf-idf" not in selected_methods:
+            try:
+                transcript.drop(columns=["tf-idf"], inplace=True)
+                current_columns.remove({"name": "tf-idf", "id": "tf-idf", "presentation": "markdown"})
+                column_names.remove("tf-idf")
+                current_style.remove({"if": {"column_id": "tf-idf"}, "width": width})
+            except:
+                pass
+
+        if "textrank" in selected_methods and "textrank" not in column_names:
+            textrank_keywords = []
+            for utterance in transcript["Utterance"]:
+                try:
+                    textrank_keywords.append(", ".join(summa_keywords.keywords(utterance, words=3).split("\n")))
+                except:
+                    textrank_keywords.append("")
+            transcript["textrank"] = textrank_keywords
+            current_columns.append({"name": "textrank", "id": "textrank", "presentation": "markdown"})
+            column_names.append("textrank")
+            current_style.append({"if": {"column_id": "textrank"}, "width": width})
+
+        if "textrank" not in selected_methods:
+            try:
+                transcript.drop(columns=["textrank"], inplace=True)
+                current_columns.remove({"name": "textrank", "id": "textrank", "presentation": "markdown"})
+                column_names.remove("textrank")
+                current_style.remove({"if": {"column_id": "textrank"}, "width": width})
+            except:
+                pass
+
+        if "yake" in selected_methods and "yake" not in column_names:
+            kw_extractor = KeywordExtractor(lan="en", n=1, top=3)
+            yake_keywords = []
+            for utterance in transcript["Utterance"]:
+                keywords = kw_extractor.extract_keywords(text=utterance)
+                keywords = [x for x, y in keywords]
+                yake_keywords.append(", ".join(keywords))
+            transcript["yake"] = yake_keywords
+            current_columns.append({"name": "yake", "id": "yake", "presentation": "markdown"})
+            column_names.append("yake")
+            current_style.append({"if": {"column_id": "yake"}, "width": width})
+
+        if "yake" not in selected_methods:
+            try:
+                transcript.drop(columns=["yake"], inplace=True)
+                current_columns.remove({"name": "yake", "id": "yake", "presentation": "markdown"})
+                column_names.remove("yake")
+                current_style.remove({"if": {"column_id": "yake"}, "width": width})
+            except:
+                pass
+        
+        if "bert" in selected_methods and "bert" not in column_names:
+            kw_extractor = KeyBERT("distilbert-base-nli-mean-tokens")
+            bert_keywords = []
+            for utterance in transcript["Utterance"]:
+                keywords = kw_extractor.extract_keywords(utterance, stop_words="english")
+                keywords = [w for w, v in keywords]
+                bert_keywords.append(", ".join(keywords[:3]))
+            transcript["bert"] = bert_keywords
+            current_columns.append({"name": "bert", "id": "bert", "presentation": "markdown"})
+            column_names.append("bert")
+            current_style.append({"if": {"column_id": "bert"}, "width": width})
+
+        if "bert" not in selected_methods:
+            try:
+                transcript.drop(columns=["bert"], inplace=True)
+                current_columns.remove({"name": "bert", "id": "bert", "presentation": "markdown"})
+                column_names.remove("bert")
+                current_style.remove({"if": {"column_id": "bert"}, "width": width})
+            except:
+                pass
+
+        transcript_table = transcript[column_names].to_dict("records")
+
+        return (current_columns, transcript_table, current_style, dash.no_update, dash.no_update, transcript["Speaker"].unique(),
+                "00:00", time.strftime("%H:%M", time.gmtime(timeline_max)), dash.no_update, dash.no_update,
+                [timeline_min, timeline_max], marks, None)
     
     if trigger != "." and trigger != "transcript_selector.value":
         transcript = transcript[transcript["Speaker"].isin(selected_speaker)]
@@ -958,24 +1124,24 @@ def update_transcript_table_and_filters(selected_transcript, selected_speaker, s
                                           (current_end_time - first_timestamp).total_seconds() + timeline_deviation]
                 transcript = transcript[transcript["Timestamp"] >= timeline_slider_values[0]]
                 transcript = transcript[transcript["Timestamp"] <= timeline_slider_values[1]]
-                transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
+                transcript_table = transcript[list(transcript)].to_dict("records")
 
-                return (transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                        dash.no_update, dash.no_update, timeline_slider_values, dash.no_update, dash.no_update)
+                return (dash.no_update, transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+                        dash.no_update, dash.no_update, dash.no_update, timeline_slider_values, dash.no_update, dash.no_update)
             except:
                 pass
 
         transcript = transcript[transcript["Timestamp"] >= selected_timeline[0]]
         transcript = transcript[transcript["Timestamp"] <= selected_timeline[1]]
-        transcript_table = transcript[["Speaker", "Time", "Utterance"]].to_dict("records")
+        transcript_table = transcript[list(transcript)].to_dict("records")
 
-        return (transcript_table, dash.no_update, dash.no_update, dash.no_update,
+        return (dash.no_update, transcript_table, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
                 time.strftime("%H:%M", time.gmtime(selected_timeline[0])),
                 time.strftime("%H:%M", time.gmtime(selected_timeline[1])),
                 dash.no_update, dash.no_update, dash.no_update, marks, dash.no_update)
 
-    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-            dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+    return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+            dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
 
 def build_download_button(uri):
     """Generates a download button for the resource"""
