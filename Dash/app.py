@@ -1,31 +1,27 @@
 import os
-import sys
 import pandas as pd
-from datetime import datetime
 import time
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 import dash_table
 
 import plotly.graph_objects as go
 
-from nltk.corpus import stopwords
-from sklearn.preprocessing import MinMaxScaler
+# import callbacks
+from callbacks.callback_upload_and_delete_transcripts import callback_upload_and_delete_transcripts
+from callbacks.callback_update_transcript_table_and_filters import callback_update_transcript_table_and_filters
+from callbacks.callback_create_and_download_pdf import callback_create_and_download_pdf
+from callbacks.callback_apply_texttiling import callback_apply_texttiling
+from callbacks.callback_apply_textsplit import callback_apply_textsplit
+from callbacks.callback_wordcloud_creator import callback_wordcloud_creator
+from callbacks.callback_animation import callback_animation
+from callbacks.callback_animation_tfidf import callback_animation_tfidf
 
-sys.path.insert(0, "./lib")
-import calculate_timestamps
-import upload_and_delete_transcripts_callback
-import pdf_callback
-import transcript_table_callback
-import texttiling_callback
-import textsplit_callback
-import wordcloud_creator_callback
-import animation_callback
-import animation_tfidf_callback
+# import functions
+from functions.calculate_timestamps import calculate_timestamps
 
 # https://bootswatch.com/lux/
 BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/lux/bootstrap.min.css"
@@ -44,7 +40,7 @@ for file in transcript_files:
         names=["Speaker", "Time", "End time", "Duration", "Utterance"],
         usecols=["Speaker", "Time", "Utterance"]
     )
-    calculate_timestamps.calculate_timestamps(transcript)
+    calculate_timestamps(transcript)
     transcripts.append(transcript)
 
 initial_transcript = transcripts[initial_transcript_index]
@@ -843,26 +839,30 @@ app.layout = dbc.Container(
     fluid=True,
 )
 
-upload_and_delete_transcripts_callback.upload_and_delete_transcripts(app, transcript_files, transcripts)
+callback_upload_and_delete_transcripts(app, transcript_files, transcripts)
 
-transcript_table_callback.transcript_table_callback(app, transcripts)
+callback_update_transcript_table_and_filters(app, transcripts)
 
-pdf_callback.create_and_download_pdf(app)
+callback_create_and_download_pdf(app)
 
-texttiling_callback.texttiling_callback(app, transcripts)
+callback_apply_texttiling(app, transcripts)
 
-textsplit_callback.textsplit_callback(app, transcripts)
+callback_apply_textsplit(app, transcripts)
 
-wordcloud_creator_callback.wordcloud_creator(app, transcripts)
+callback_wordcloud_creator(app, transcripts)
 
-animation_callback.animation(app, transcripts)
+callback_animation(app, transcripts)
 
-animation_tfidf_callback.animation_tfidf(app, transcripts)
+callback_animation_tfidf(app, transcripts)
 
 if __name__ == "__main__":
-    # context = ("/etc/letsencrypt/live/projects.pascalaigner.ch/cert.pem", "/etc/letsencrypt/live/projects.pascalaigner.ch/privkey.pem")
+    # context = (
+    #     "/etc/letsencrypt/live/projects.pascalaigner.ch/cert.pem",
+    #     "/etc/letsencrypt/live/projects.pascalaigner.ch/privkey.pem"
+    # )
     app.run_server(
         # host="projects.pascalaigner.ch",
         # port=443,
         # ssl_context=context,
-        debug=True)
+        debug=True
+    )
