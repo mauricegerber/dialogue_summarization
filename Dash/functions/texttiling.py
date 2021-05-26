@@ -146,4 +146,4 @@ def texttiling(transcript, stopwords, w, k, n, min_boundary_distance=20):
         normalized_boundaries.append(smallest_positive_value_index+1)
     normalized_boundaries.append(len(transcript)-1)
 
-    return normalized_boundaries, boundaries, depth_scores
+    return normalized_boundaries, boundaries, depth_scores, gap_scores

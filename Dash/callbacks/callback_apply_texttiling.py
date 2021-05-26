@@ -32,7 +32,7 @@ def callback_apply_texttiling(app, transcripts):
                 additional_stopwords_list = additional_stopwords.split(",")
             sw = set(stopwords.words(selected_language) + additional_stopwords_list)
             
-            normalized_boundaries, boundaries, depth_scores = texttiling(transcript, sw, pseudosentence_length,
+            normalized_boundaries, boundaries, depth_scores, gap_scores= texttiling(transcript, sw, pseudosentence_length,
                                                                                     block_size, n_topics)
             boundaries_timestamps = [transcript["Timestamp"][i] for i in normalized_boundaries]
             boundaries_time = [transcript["Time"][normalized_boundaries[i-1]] + " - " + transcript["Time"][normalized_boundaries[i]]
