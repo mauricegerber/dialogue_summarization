@@ -2,10 +2,20 @@ import nltk
 import pandas as pd
 from nltk.corpus import stopwords, wordnet
 from wordcloud import (WordCloud, get_single_color_func)
+import plotly.express as px
+import plotly.graph_objects as go
+import plotly.io as pio
 import matplotlib.pyplot as plt
 import datetime
 
 import random
+import sys
+import os
+sys.path.insert(0, os.path.split(os.path.split(sys.path[0])[0])[0])
+
+pio.kaleido.scope.default_format = "png"
+pio.kaleido.scope.default_width = 1920
+pio.kaleido.scope.default_height = 500
 
 transcript = pd.read_csv(
     filepath_or_buffer="Playground\Vice presidential debate.csv",
@@ -94,17 +104,19 @@ def create_wordcloud(text, words_old, words_new, key):
         'red': words_old
     }        
     
-    default_color = "grey"
+    default_color = "black"
     grouped_color_func = GroupedColorFunc(color_to_words, default_color)
 
-    wordcloud = WordCloud(stopwords=stop_words, collocations=False, max_words = 15).generate(text.lower())
+    wordcloud = WordCloud(stopwords=stop_words, collocations=False, max_words = 15, 
+    background_color='white', width=1920, height=1000).generate(text.lower())
     wordcloud.recolor(color_func=grouped_color_func)
 
     plt.figure(figsize=(15,10))
     plt.clf()
     plt.imshow(wordcloud, interpolation="bilinear")
     plt.axis("off")
-    plt.savefig("wordcloud_p1{}.png".format(key), dpi = 300)
+    plt.savefig("./images in paper/Wordcloud/wordcloud_p1{}.png".format(key), dpi = 300)
+
 
 
 text = ""
