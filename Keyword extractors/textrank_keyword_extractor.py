@@ -1,7 +1,8 @@
 import sys
 import os
 
-from rake_nltk import Rake
+# https://github.com/summanlp/textrank
+from summa import keywords
 
 # add absolute path to main directory "summarization" to system paths
 sys.path.insert(0, os.path.split(sys.path[0])[0])
@@ -14,6 +15,5 @@ for line in f:
 # print(sentences)
 
 for sentence in sentences:
-    r = Rake() # Uses stopwords for english from NLTK, and all puntuation characters.
-    r.extract_keywords_from_text(sentence)
-    print(r.get_ranked_phrases()) # To get keyword phrases ranked highest to lowest.
+    kws = keywords.keywords(sentence, words=5)
+    print(kws)
