@@ -6,9 +6,10 @@ from rake_nltk import Rake
 
 # add absolute path to main directory "summarization" to system paths
 sys.path.insert(0, os.path.split(sys.path[0])[0])
+path = sys.path[0]
 
 # read sample file and create list of sentences
-f = open("./Keyword extractors/bbc_sample_text.txt", "r")
+f = open(path + "/Keyword extractors/bbc_sample_text.txt", "r")
 sentences = []
 for line in f:
     sentences.append(line.strip("\n"))
