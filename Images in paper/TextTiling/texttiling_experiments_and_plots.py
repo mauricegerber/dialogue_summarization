@@ -12,7 +12,7 @@ pio.kaleido.scope.default_width = 1920
 pio.kaleido.scope.default_height = 500
 
 # add absolute path to main directory "summarization" to system paths
-sys.path.insert(0, os.path.split(sys.path[0])[0])
+sys.path.insert(0, os.path.split(os.path.split(sys.path[0])[0])[0])
 
 from Dash.functions.calculate_timestamps import calculate_timestamps
 from Dash.functions.texttiling import texttiling
@@ -124,7 +124,7 @@ fig.update_yaxes(
     tick0=0,
     dtick=0.1
 )
-fig.write_image("./Algorithms/texttiling_cutoff.png")
+# fig.write_image("./Algorithms/texttiling_cutoff.png")
 
 
 # # plot texttiling_kX.png
