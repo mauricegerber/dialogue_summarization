@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import statistics
 from nltk.corpus import stopwords
+import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
@@ -66,66 +67,137 @@ for column in df:
 data = {"Start time": boundaries_time, "Keywords": keywords}
 keywords_table = pd.DataFrame(data=data).to_dict("records")
 
-print(statistics.mean(depth_scores))
-print(statistics.stdev(depth_scores))
-
-fig = px.histogram(depth_scores)
-fig.show()
-
 fig = go.Figure()
 fig["layout"] = go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})
 
-# plot texttiling_depth_score.png
-fig.add_trace(go.Scatter(
-    x=list(range(len(depth_scores))),
-    y=depth_scores,
-    mode="lines",
-    line=dict(width=4)
-))
-fig.add_shape(
-    type="line",
-    x0=0,
-    y0=statistics.mean(depth_scores),
-    x1=len(depth_scores),
-    y1=statistics.mean(depth_scores),
-    line=dict(
-        width=3,
-        dash="dot",
-))
-fig.add_shape(
-    type="line",
-    x0=0,
-    y0=statistics.mean(depth_scores) - statistics.stdev(depth_scores)/2,
-    x1=len(depth_scores),
-    y1=statistics.mean(depth_scores) - statistics.stdev(depth_scores)/2,
-    line=dict(
-        width=3,
-        dash="dot",
-))
-axes_title_font = dict(family="Times", size=50)
-axes_tick_font = dict(family="Times", size=40)
-space_between_axis_label_and_ticks = 40
-grid_line_width = 4
-fig.update_xaxes(
-    title="Gap",
-    title_font=axes_title_font,
-    title_standoff=space_between_axis_label_and_ticks,
-    zerolinewidth=grid_line_width,
-    gridwidth=grid_line_width,
-    tickfont=axes_tick_font
-)
-fig.update_yaxes(
-    title="Score",
-    title_font=axes_title_font,
-    title_standoff=space_between_axis_label_and_ticks,
-    zerolinewidth=grid_line_width,
-    gridwidth=grid_line_width,
-    tickfont=axes_tick_font,
-    tick0=0,
-    dtick=0.1
-)
-# fig.write_image("./Algorithms/texttiling_cutoff.png")
+# # plot texttiling_histogram.png
+# fig.add_trace(go.Histogram(
+#     x=depth_scores,
+#     histnorm="probability"
+# ))
+# axes_title_font = dict(family="Times", size=50)
+# axes_tick_font = dict(family="Times", size=40)
+# space_between_axis_label_and_ticks = 40
+# grid_line_width = 4
+# fig.update_xaxes(
+#     title="Score",
+#     title_font=axes_title_font,
+#     title_standoff=space_between_axis_label_and_ticks,
+#     zerolinewidth=grid_line_width,
+#     gridwidth=grid_line_width,
+#     tickfont=axes_tick_font
+# )
+# fig.update_yaxes(
+#     title="Probability",
+#     title_font=axes_title_font,
+#     title_standoff=space_between_axis_label_and_ticks,
+#     zerolinewidth=grid_line_width,
+#     gridwidth=grid_line_width,
+#     tickfont=axes_tick_font,
+#     tick0=0,
+#     dtick=0.1
+# )
+# fig.write_image("./Images in paper/TextTiling/texttiling_histogram.png")
 
+# # plot texttiling_cutoff.png
+# fig.add_trace(go.Scatter(
+#     x=list(range(len(depth_scores))),
+#     y=depth_scores,
+#     mode="lines",
+#     line=dict(width=4),
+#     showlegend = False
+# ))
+# fig.add_trace(go.Scatter(
+#     x=[0],
+#     y=[0],
+#     mode="lines",
+#     line=dict(
+#         width=4,
+#     ),
+#     name = "Mean"
+# ))
+# fig.add_trace(go.Scatter(
+#     x=[0],
+#     y=[0],
+#     mode="lines",
+#     line=dict(
+#         width=4,
+#     ),
+#     name = "LC"
+# ))
+# fig.add_trace(go.Scatter(
+#     x=[0],
+#     y=[0],
+#     mode="lines",
+#     line=dict(
+#         width=4,
+#     ),
+#     name = "HC"
+# ))
+# fig.add_shape(
+#     type="line",
+#     x0=0,
+#     y0=statistics.mean(depth_scores),
+#     x1=len(depth_scores),
+#     y1=statistics.mean(depth_scores),
+#     line=dict(
+#         width=4,
+#         color="#ff7f0e"
+#     )
+# )
+# fig.add_shape(
+#     type="line",
+#     x0=0,
+#     y0=statistics.mean(depth_scores) - statistics.stdev(depth_scores),
+#     x1=len(depth_scores),
+#     y1=statistics.mean(depth_scores) - statistics.stdev(depth_scores),
+#     line=dict(
+#         width=4,
+#         color="#2ca02c",
+#     )
+# )
+# fig.add_shape(
+#     type="line",
+#     x0=0,
+#     y0=statistics.mean(depth_scores) - statistics.stdev(depth_scores)/2,
+#     x1=len(depth_scores),
+#     y1=statistics.mean(depth_scores) - statistics.stdev(depth_scores)/2,
+#     line=dict(
+#         width=4,
+#         color="#9467bd",
+#     )
+# )
+# axes_title_font = dict(family="Times", size=50)
+# axes_tick_font = dict(family="Times", size=40)
+# space_between_axis_label_and_ticks = 40
+# grid_line_width = 4
+# fig.update_layout(
+#     legend=dict(
+#         yanchor="top",
+#         xanchor="right",
+#         x=1
+#     ),
+#     font=axes_tick_font
+# )
+# fig.update_xaxes(
+#     title="Gap",
+#     title_font=axes_title_font,
+#     title_standoff=space_between_axis_label_and_ticks,
+#     zerolinewidth=grid_line_width,
+#     gridwidth=grid_line_width,
+#     tickfont=axes_tick_font
+# )
+# fig.update_yaxes(
+#     title="Score",
+#     title_font=axes_title_font,
+#     title_standoff=space_between_axis_label_and_ticks,
+#     zerolinewidth=grid_line_width,
+#     gridwidth=grid_line_width,
+#     tickfont=axes_tick_font,
+#     tick0=0,
+#     dtick=0.1
+# )
+# fig.write_image("./Images in paper/TextTiling/texttiling_cutoff.png")
 
 # # plot texttiling_kX.png
 # parameters = [5, 10, 20]
