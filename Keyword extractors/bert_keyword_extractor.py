@@ -15,8 +15,8 @@ for line in f:
     sentences.append(line.strip("\n"))
 # print(sentences)
 
-keyphrase_ngram_range = (1, 1) # length of keyword (min, max)
-n_keywords = 5 # number of keywords
+keyphrase_ngram_range = (1, 2) # length of keyword (min, max)
+n_keywords = 2 # number of keywords
 use_mmr = True # enablse / disable diversity
 diversity = 1 # the higher, the more diverse the keywords are [0, 1]
 
