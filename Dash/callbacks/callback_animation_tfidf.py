@@ -39,7 +39,6 @@ def callback_animation_tfidf(app, transcripts):
                         tfidf_col.append(counts[i])
                 iteration_counter += 1
             df = pd.DataFrame({'word': word_col, 'block': block_col, 'x': tf_col, 'y': idf_col, 'score': tfidf_col})
-            print(df)
             # pd.set_option("display.max_rows", None, "display.max_columns", None)
             # print(df)
             blocks = df["block"].unique().tolist()
