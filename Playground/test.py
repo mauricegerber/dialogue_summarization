@@ -1,10 +1,10 @@
+import sys
 import os
 import word2vec
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import CountVectorizer
-import string
 import random
 
 import numpy as np
@@ -162,11 +162,14 @@ def split_greedy(docmat, penalty=None, max_splits=None):
                         min_gain=min_gain, optimal=None)
 
 ###############################################################################################################################
-base_path = "C:/Users/pasca/myCloud/01 Studium/ZHAW/Bachelor Wirtschaftsingenieurwesen/6. Semester/BA/summarization/Algorithms"
-# /Vice presidential debate.csv
-# /Job interview.csv
+# add absolute path to main directory "summarization" to system paths
+sys.path.insert(0, os.path.split(sys.path[0])[0])
+path = sys.path[0]
+# Vice presidential debate.csv
+# Job interview.csv
+
 transcript = pd.read_csv(
-    filepath_or_buffer=base_path + "/Vice presidential debate.csv",
+    filepath_or_buffer=path + "/Dash/transcripts/Job interview.csv",
     header=0,
     names=["Speaker", "Time", "End time", "Duration", "Utterance"],
     usecols=["Speaker", "Time", "Utterance"]
@@ -175,10 +178,11 @@ text = ""
 for utterance in transcript["Utterance"].str.lower():
     text += utterance + " "
 
-wrdvec_path = base_path + '/wrdvecs.bin'
+wrdvec_path = path + '/Dash/functions/wrdvecs.bin'
 model = word2vec.load(wrdvec_path)
 wrdvecs = pd.DataFrame(model.vectors, index=model.vocab) # dataframe with [71291 rows x 200 columns], row indices are words
 del model
+print(wrdvecs.shape)
 
 from textsplit.tools import SimpleSentenceTokenizer
 sentence_tokenizer = SimpleSentenceTokenizer()
@@ -189,8 +193,13 @@ from textsplit.algorithm import split_optimal, get_total
 segment_len = 60  # segment target length in sentences
 
 sentenced_text = sentence_tokenizer(text) # list of sentences (137 sentences)
+print(len(sentenced_text))
+
+
 vecr = CountVectorizer(vocabulary=wrdvecs.index) # the vocabulary are all words from the word2vec model (71291 words)
 sentence_vectors = vecr.transform(sentenced_text).dot(wrdvecs) # result is a matrix with 137 rows and 200 columns
+print(vecr.transform(sentenced_text).toarray().shape)
+
 # vecr.transform(sentenced_text) returns sparse matrix with 137 rows and 71291 columns
 # it represents the counts of the words per sentence
 # the dot command performs a matrix multiplication
@@ -201,17 +210,17 @@ sentence_vectors = vecr.transform(sentenced_text).dot(wrdvecs) # result is a mat
 
 # penalty is the minimum gain for a given number of max_splits
 penalty = get_penalty([sentence_vectors], segment_len)
-print('penalty %4.2f' % penalty)
+#print('penalty %4.2f' % penalty)
 
 optimal_segmentation = split_optimal(sentence_vectors, penalty, seg_limit=250)
-print(optimal_segmentation)
+#print(optimal_segmentation)
 segmented_text = get_segments(sentenced_text, optimal_segmentation)
 
-print('%d sentences, %d segments, avg %4.2f sentences per segment' % (
-    len(sentenced_text), len(segmented_text), len(sentenced_text) / len(segmented_text)))
+#print('%d sentences, %d segments, avg %4.2f sentences per segment' % (
+# len(sentenced_text), len(segmented_text), len(sentenced_text) / len(segmented_text)))
 
 greedy_segmentation = split_greedy(sentence_vectors, max_splits=len(optimal_segmentation.splits))
-print(greedy_segmentation)
+#print(greedy_segmentation)
 greedy_segmented_text = get_segments(sentenced_text, greedy_segmentation)
 lengths_optimal = [len(segment) for segment in segmented_text for sentence in segment]
 lengths_greedy = [len(segment) for segment in greedy_segmented_text for sentence in segment]
@@ -219,9 +228,9 @@ lengths_greedy = [len(segment) for segment in greedy_segmented_text for sentence
 df = pd.DataFrame({'greedy':lengths_greedy, 'optimal': lengths_optimal})
 df.plot.line(figsize=(18, 3), title='Segment lenghts over text')
 #df.plot.hist(bins=30, alpha=0.5, figsize=(10, 3), title='Histogram of segment lengths')
-plt.show()
+# plt.show()
 
 totals = [get_total(sentence_vectors, seg.splits, penalty) 
           for seg in [optimal_segmentation, greedy_segmentation]]
-print('optimal score %4.2f, greedy score %4.2f' % tuple(totals))
-print('ratio of scores %5.4f' % (totals[0] / totals[1])) 
+# print('optimal score %4.2f, greedy score %4.2f' % tuple(totals))
+# print('ratio of scores %5.4f' % (totals[0] / totals[1])) 

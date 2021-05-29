@@ -2,7 +2,9 @@ import sys
 import os
 
 import pandas as pd
+import numpy as np
 import statistics
+from statsmodels.graphics.gofplots import qqplot
 from nltk.corpus import stopwords
 import plotly
 import plotly.express as px
