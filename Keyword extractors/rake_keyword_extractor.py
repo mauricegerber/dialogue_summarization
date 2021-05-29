@@ -15,7 +15,7 @@ for line in f:
     sentences.append(line.strip("\n"))
 # print(sentences)
 
-r = Rake() # Uses stopwords for english from NLTK, and all puntuation characters.
+r = Rake(min_length=1, max_length=2) # Uses stopwords for english from NLTK, and all puntuation characters.
 for sentence in sentences:
     r.extract_keywords_from_text(sentence)
-    print(r.get_ranked_phrases()) # To get keyword phrases ranked highest to lowest.
+    print(r.get_ranked_phrases_with_scores()) # To get keyword phrases ranked highest to lowest.
