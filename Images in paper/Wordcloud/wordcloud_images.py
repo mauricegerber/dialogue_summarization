@@ -2,6 +2,7 @@ import sys
 import os
 import math
 import random
+import numpy as np
 
 import pandas as pd
 import statistics
@@ -91,23 +92,13 @@ fig_dict = {
 }
 
 # fill in most of layout
-fig_dict["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0}, plot_bgcolor="rgba(0,0,0,0)")
+fig_dict["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})
 fig_dict["layout"]["xaxis"] = {"title": "Frequency in Block", "showgrid": True, 'zeroline': True, 'visible': True, "range": [-0.001,0.014]}
 fig_dict["layout"]["yaxis"] = {"title": "Inverse Document Frequency", "showgrid": True, 'zeroline': True, 'visible': True, "tickmode": "array", "tickvals": y_tickvals,
 "ticktext": y_ticktext, "type": "log"}
 fig_dict["layout"]["hovermode"] = "closest"
-fig_dict["layout"]["updatemenus"] = [
-    {
-        "direction": "left",
-        "pad": {"r": 10, "t": 87},
-        "showactive": False,
-        "type": "buttons",
-        "x": 0.1,
-        "xanchor": "right",
-        "y": 0,
-        "yanchor": "top"
-    }
-]
+
+
 
 sliders_dict = {
     "active": 0,
@@ -138,7 +129,8 @@ data_dict = {
     "text": list(dataset_by_block["word"]),
     "marker": {
         "sizemode": "area",
-        "sizeref": 0.01
+        "sizeref": 0.01,
+        #"opacity": 0
     },
     "customdata": dataset_by_block["score"],
 }
@@ -162,10 +154,17 @@ sliders_dict["steps"].append(slider_step)
 
 fig_dict["layout"]["sliders"] = [sliders_dict]
 
+
+
 fig = go.Figure(fig_dict)
 #fig["layout"] = go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})
 fig.update_xaxes(range=[0.004, 0.008] )
 # fig.update_yaxes(visible=False)
+# print(type(str(list(dataset_by_block["word"]))))
+# fig.add_annotation(x=list(dataset_by_block["x"]), y=list(dataset_by_block["x"]),
+#             text=str(list(dataset_by_block["word"]))[55],
+#             showarrow=True,
+#             arrowhead=1)
 fig.write_image("./images in paper/Wordcloud/wordcloud_tfidf.png")
 
 

@@ -14,6 +14,8 @@ from tabs.tab_textsplit import tab_textsplit
 from tabs.tab_wordcloud_draft import tab_wordcloud_draft
 from tabs.tab_wordcloud_animation import tab_wordcloud_animation
 from tabs.tab_wordcloud_tfidf import tab_wordcloud_tfidf
+from tabs.tab_wordcloud_tfidf2 import tab_wordcloud_tfidf2
+
 
 # import callbacks
 from callbacks.callback_upload_and_delete_transcripts import callback_upload_and_delete_transcripts
@@ -151,6 +153,7 @@ app.layout = dbc.Container(
                                 tab_wordcloud_draft(),
                                 tab_wordcloud_animation(),
                                 tab_wordcloud_tfidf(),
+                                tab_wordcloud_tfidf2(),
                             ],
                         ),
                     ],
