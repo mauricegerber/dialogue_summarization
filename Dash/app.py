@@ -25,6 +25,7 @@ from callbacks.callback_apply_textsplit import callback_apply_textsplit
 from callbacks.callback_wordcloud_creator import callback_wordcloud_creator
 from callbacks.callback_animation import callback_animation
 from callbacks.callback_animation_tfidf import callback_animation_tfidf
+from callbacks.callback_animation_tfidf2 import callback_animation_tfidf2
 
 # import functions
 from functions.calculate_timestamps import calculate_timestamps
@@ -187,6 +188,10 @@ callback_wordcloud_creator(app, transcripts)
 callback_animation(app, transcripts)
 
 callback_animation_tfidf(app, transcripts)
+
+callback_animation_tfidf2(app, transcripts)
+
+
 
 if __name__ == "__main__":
     # context = (
