@@ -158,7 +158,8 @@ def tab_texttiling():
                     id="texttiling_table",
                     columns=[
                         {"name": "Time", "id": "Start time", "presentation": "markdown"},
-                        {"name": "Keywords (tf-idf)", "id": "Keywords", "presentation": "markdown"},
+                        {"name": "Keywords (tf-idf)", "id": "Keywords (tf-idf)", "presentation": "markdown"},
+                        {"name": "Keywords (YAKE)", "id": "Keywords (YAKE)", "presentation": "markdown"},
                     ],
                     style_data_conditional=[
                         {"if": {"state": "selected"},

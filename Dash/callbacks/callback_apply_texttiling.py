@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 
 from nltk.corpus import stopwords
+from yake import KeywordExtractor
 
 # import functions
 from functions.texttiling import texttiling
@@ -48,11 +49,18 @@ def callback_apply_texttiling(app, transcripts):
                 subtopics.append(text)
                 
             df = tfidf(subtopics)
-            keywords = []
+            keywords_tfidf = []
             for column in df:
-                keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:10])))
+                keywords_tfidf.append(", ".join(list(df[column].sort_values(ascending=False).index[:5])))
+
+            keywords_yake = []
+            kw_extractor = KeywordExtractor(lan=selected_language, n=1, top=5)
+            for subtopic in subtopics:
+                keywords = kw_extractor.extract_keywords(text=subtopic)
+                keywords = [x for x, y in keywords]
+                keywords_yake.append(", ".join(keywords))
             
-            data = {"Start time": boundaries_time, "Keywords": keywords}
+            data = {"Start time": boundaries_time, "Keywords (tf-idf)": keywords_tfidf, "Keywords (YAKE)": keywords_yake}
             keywords_table = pd.DataFrame(data=data).to_dict("records")
 
             fig = go.Figure()

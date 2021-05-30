@@ -15,7 +15,7 @@ for line in f:
     sentences.append(line.strip("\n"))
 # print(sentences)
 
-language = "en"
+language = "english"
 max_ngram_size = 2 # length of keyword
 n_keywords = 2 # number of keywords
 deduplication_threshold = 0.1 # limit the duplication of words in different keywords (0.9 = allowed, 0.1 = avoid)
