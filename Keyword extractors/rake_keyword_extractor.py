@@ -156,6 +156,7 @@ class Rake(object):
         self.rank_list = []
         for phrase in phrase_list:
             rank = 0.0
+
             for word in phrase:
                 if self.metric == Metric.DEGREE_TO_FREQUENCY_RATIO:
                     rank += 1.0 * self.degree[word] / self.frequency_dist[word]
@@ -224,28 +225,21 @@ sentences = []
 for line in f:
     sentences.append(line.strip("\n"))
     #print(sentences)
-#sentences = sentences[:2]
+#sentences = sentences[2:]
 #print(sentences)
 
 r = Rake() # Uses stopwords for english from NLTK, and all puntuation characters.
 
-words = []
-
-for sentence in sentences:
-    r.extract_keywords_from_text(sentence)
-   # print(r.get_ranked_phrases_with_scores()) # To get keyword phrases ranked highest to lowest.
-  #  print(r.get_ranked_phrases())
-    words.append(' '.join(r.get_ranked_phrases()))
-
 text = ''
-for word in words:
-    text = text + word + ' '
+for sentence in sentences:
+    text = text + sentence + ' '
+r.extract_keywords_from_text(text)
+print(r.get_ranked_phrases_with_scores()) # To get keyword phrases ranked highest to lowest.
+#print(r.get_ranked_phrases())
+#words.append(' '.join(r.get_ranked_phrases()))
+
 
 words_list = set(word_tokenize(text))
-print(words_list)
-
-
-
-
+#print(words_list)
 
 
