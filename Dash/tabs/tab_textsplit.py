@@ -36,22 +36,53 @@ def tab_textsplit():
             [
                 dbc.Col(
                     [
+                        html.H5("Break condition"),
+                        dbc.RadioItems(
+                            id="break_condition_radio_button",
+                            options=[
+                                {"label": "Max splits", "value": "max_splits"},
+                                {"label": "Min gain", "value": "min_gain"},
+                            ],
+                            value="max_splits",
+                        ),
+                    ],
+                    width="auto",
+                ),
+                dbc.Col(
+                    [
                         html.H5("Parameters"),
                         dbc.Row(
                             [
                                 dbc.Col(
                                     [
-                                        html.Div("Segment length"),
+                                        html.Div("Max splits"),
                                     ],
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.Input(
-                                            id="segment_length_input",
+                                            id="max_splits_input",
                                             type="number",
                                             step=1,
-                                            value=30,
+                                            value=2,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Div("Min gain"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="min_gain_input",
+                                            type="number",
+                                            step=0.1,
+                                            value=5,
                                         ),
                                     ],
                                     width="auto",

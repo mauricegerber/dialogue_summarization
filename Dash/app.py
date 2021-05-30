@@ -16,7 +16,6 @@ from tabs.tab_wordcloud_animation import tab_wordcloud_animation
 from tabs.tab_wordcloud_tfidf import tab_wordcloud_tfidf
 from tabs.tab_wordcloud_tfidf2 import tab_wordcloud_tfidf2
 
-
 # import callbacks
 from callbacks.callback_upload_and_delete_transcripts import callback_upload_and_delete_transcripts
 from callbacks.callback_update_transcript_table_and_filters import callback_update_transcript_table_and_filters

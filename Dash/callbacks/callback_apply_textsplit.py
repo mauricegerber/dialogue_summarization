@@ -14,13 +14,18 @@ def callback_apply_textsplit(app, transcripts):
         Output(component_id="textsplit_table", component_property="data"),
         Input(component_id="apply_textsplit_settings", component_property="n_clicks"),
         State(component_id="transcript_selector", component_property="value"),
-        State(component_id="segment_length_input", component_property="value"),
+        State(component_id="break_condition_radio_button", component_property="value"),
+        State(component_id="max_splits_input", component_property="value"),
+        State(component_id="min_gain_input", component_property="value"),
     )
-    def apply_textsplit(n_clicks, selected_transcript, segment_length):
+    def apply_textsplit(n_clicks, selected_transcript, selected_break_condition, max_splits, min_gain):
         if dash.callback_context.triggered[0]["prop_id"] == "apply_textsplit_settings.n_clicks":
             transcript = transcripts[int(selected_transcript)]
-            
-            normalized_splits, splits, lengths_optimal = textsplit(transcript, segment_length)
+
+            if selected_break_condition == "max_splits":
+                normalized_splits, splits, lengths_optimal = textsplit(transcript, max_splits, None)
+            if selected_break_condition == "min_gain":
+                normalized_splits, splits, lengths_optimal = textsplit(transcript, None, min_gain)
 
             boundaries_timestamps = [transcript["Timestamp"][i] for i in normalized_splits]
             boundaries_time = [transcript["Time"][normalized_splits[i-1]] + " - " + transcript["Time"][normalized_splits[i]]

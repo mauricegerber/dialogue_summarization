@@ -354,7 +354,7 @@ while True:
 #         family="Times",
 #         size=20,
 #     ),
-#     mode="lines+text",
+#     mode="text",
 # ))
 # axes_title_font = dict(family="Times", size=40)
 # axes_tick_font = dict(family="Times", size=15)
@@ -389,45 +389,45 @@ while True:
 # )
 # fig.show()
 
-wrdvecs_array_reduced_even_more = wrdvecs_reduced[wrdvecs_reduced.index.isin(word_selection)]
-fig = go.Figure()
-fig.add_trace(go.Scatter3d(
-    x=wrdvecs_array_reduced_even_more[2],
-    y=wrdvecs_array_reduced_even_more[1],
-    z=wrdvecs_array_reduced_even_more[0],
-    text=wrdvecs_array_reduced_even_more.index,
-    textfont=dict(
-        family="Times",
-        size=20,
-    ),
-    mode="text",
-))
-axes_title_font = dict(family="Times", size=40)
-axes_tick_font = dict(family="Times", size=15)
-fig.update_layout(scene = dict(
-    xaxis = dict(
-        range=[-0.3, 0.2],
-        title_font=axes_title_font,
-        tickfont=axes_tick_font,
-        backgroundcolor="rgb(200, 200, 230)",
-        gridcolor="white",
-        showbackground=True,
-        zerolinecolor="white",),
-    yaxis = dict(
-        range=[-0.2, 0.1],
-        title_font=axes_title_font,
-        tickfont=axes_tick_font,
-        backgroundcolor="rgb(230, 200,230)",
-        gridcolor="white",
-        showbackground=True,
-        zerolinecolor="white"),
-    zaxis = dict(
-        range=[-0.1, 0.1],
-        title_font=axes_title_font,
-        tickfont=axes_tick_font,
-        backgroundcolor="rgb(230, 230,200)",
-        gridcolor="white",
-        showbackground=True,
-        zerolinecolor="white",),),
-)
-fig.show()
+# wrdvecs_array_reduced_even_more = wrdvecs_reduced[wrdvecs_reduced.index.isin(word_selection)]
+# fig = go.Figure()
+# fig.add_trace(go.Scatter3d(
+#     x=wrdvecs_array_reduced_even_more[2],
+#     y=wrdvecs_array_reduced_even_more[1],
+#     z=wrdvecs_array_reduced_even_more[0],
+#     text=wrdvecs_array_reduced_even_more.index,
+#     textfont=dict(
+#         family="Times",
+#         size=20,
+#     ),
+#     mode="text",
+# ))
+# axes_title_font = dict(family="Times", size=40)
+# axes_tick_font = dict(family="Times", size=15)
+# fig.update_layout(scene = dict(
+#     xaxis = dict(
+#         range=[-0.3, 0.2],
+#         title_font=axes_title_font,
+#         tickfont=axes_tick_font,
+#         backgroundcolor="rgb(200, 200, 230)",
+#         gridcolor="white",
+#         showbackground=True,
+#         zerolinecolor="white",),
+#     yaxis = dict(
+#         range=[-0.2, 0.1],
+#         title_font=axes_title_font,
+#         tickfont=axes_tick_font,
+#         backgroundcolor="rgb(230, 200,230)",
+#         gridcolor="white",
+#         showbackground=True,
+#         zerolinecolor="white"),
+#     zaxis = dict(
+#         range=[-0.1, 0.1],
+#         title_font=axes_title_font,
+#         tickfont=axes_tick_font,
+#         backgroundcolor="rgb(230, 230,200)",
+#         gridcolor="white",
+#         showbackground=True,
+#         zerolinecolor="white",),),
+# )
+# fig.show()
