@@ -18,20 +18,16 @@ def callback_apply_texttiling(app, transcripts):
         Input(component_id="apply_texttiling_settings", component_property="n_clicks"),
         State(component_id="transcript_selector", component_property="value"),
         State(component_id="language_radio_button", component_property="value"),
-        State(component_id="stopwords_input", component_property="value"),
         State(component_id="pseudosentence_length_input", component_property="value"),
         State(component_id="block_size_input", component_property="value"),
         State(component_id="n_topics_input", component_property="value"),
     )
-    def apply_texttiling(n_clicks, selected_transcript, selected_language, additional_stopwords,
+    def apply_texttiling(n_clicks, selected_transcript, selected_language,
                         pseudosentence_length, block_size, n_topics):
         if dash.callback_context.triggered[0]["prop_id"] == "apply_texttiling_settings.n_clicks":
             transcript = transcripts[int(selected_transcript)]
 
-            additional_stopwords_list = []
-            if additional_stopwords != None:
-                additional_stopwords_list = additional_stopwords.split(",")
-            sw = set(stopwords.words(selected_language) + additional_stopwords_list)
+            sw = stopwords.words(selected_language)
             
             normalized_boundaries, boundaries, depth_scores, gap_scores= texttiling(transcript, sw, pseudosentence_length,
                                                                                     block_size, n_topics)
@@ -54,7 +50,7 @@ def callback_apply_texttiling(app, transcripts):
                 keywords_tfidf.append(", ".join(list(df[column].sort_values(ascending=False).index[:5])))
 
             keywords_yake = []
-            kw_extractor = KeywordExtractor(lan=selected_language, n=1, top=5)
+            kw_extractor = KeywordExtractor(lan=selected_language, n=2, top=5)
             for subtopic in subtopics:
                 keywords = kw_extractor.extract_keywords(text=subtopic)
                 keywords = [x for x, y in keywords]

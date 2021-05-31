@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 
 def tab_keywords():
     vertical_space = "15px"
+    vertical_space2 = "30px"
     tab = dbc.Tab(label="Keyword extraction", children=[
         html.Div(style={"height": vertical_space}),
         dbc.Row(
@@ -28,13 +29,28 @@ def tab_keywords():
             [
                 dbc.Col(
                     [
+                        html.H5("Language"),
+                        dbc.RadioItems(
+                            id="language_radio_button",
+                            options=[
+                                {"label": "English", "value": "english"},
+                                {"label": "German", "value": "german"},
+                            ],
+                            value="english",
+                        ),
+                    ],
+                    width="auto",
+                ),
+                dbc.Col(
+                    [
+                        html.H5("Keyword extractors"),
                         dbc.Checklist(
                             id="keyword_extraction_method_selector",
                             options=[
                                 {"label": "TF-IDF", "value": "tf-idf"},
-                                {"label": "TextRank", "value": "textrank"},
-                                {"label": "YAKE!", "value": "yake"},
-                                {"label": "BERT", "value": "bert"},
+                                {"label": "RAKE", "value": "rake"},
+                                {"label": "YAKE", "value": "yake"},
+                                {"label": "KeyBERT", "value": "keybert"},
                             ],
                             value=[],
                             switch=True,
@@ -49,6 +65,231 @@ def tab_keywords():
                             "Apply",
                             id="apply_keyword_extraction_settings",
                             className="btn-outline-primary",
+                        ),
+                    ],
+                    width="auto",
+                ),
+            ],
+        ),
+        html.Div(style={"height": vertical_space2}),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.H5("RAKE"),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.Div("Number of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="rake_n_kws",
+                                            type="number",
+                                            step=1,
+                                            value=3,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Div("Min length of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="rake_min_kw_len",
+                                            type="number",
+                                            step=1,
+                                            value=1,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Div("Max length of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="rake_max_kw_len",
+                                            type="number",
+                                            step=1,
+                                            value=100,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                            ],
+                        ),
+                    ],
+                    width="auto",
+                ),
+            ],
+        ),
+        html.Div(style={"height": vertical_space2}),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.H5("YAKE"),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.Div("Number of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="yake_n_kws",
+                                            type="number",
+                                            step=1,
+                                            value=3,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Div("Max length of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="yake_max_kw_len",
+                                            type="number",
+                                            step=1,
+                                            value=3,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Div("Deduplication threshold"),
+                                        html.Div("in the interval [0, 1["),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="yake_dd_threshold",
+                                            type="number",
+                                            step=0.1,
+                                            value=0.9,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                            ],
+                        ),
+                    ],
+                    width="auto",
+                ),
+            ],
+        ),
+        html.Div(style={"height": vertical_space2}),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.H5("KeyBERT"),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.Div("Number of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="keybert_n_kws",
+                                            type="number",
+                                            step=1,
+                                            value=3,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Div("Min length of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="keybert_min_kw_len",
+                                            type="number",
+                                            step=1,
+                                            value=1,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Div("Max length of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="keybert_max_kw_len",
+                                            type="number",
+                                            step=1,
+                                            value=3,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        html.Div("Diversity in the"),
+                                        html.Div("interval [0, 1]"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="keybert_diversity",
+                                            type="number",
+                                            step=0.1,
+                                            value=1,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                            ],
                         ),
                     ],
                     width="auto",

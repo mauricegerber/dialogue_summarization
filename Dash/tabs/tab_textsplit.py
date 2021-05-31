@@ -91,7 +91,6 @@ def tab_textsplit():
                         ),
                     ],
                     width="auto",
-                    #style={"margin": "0% 3% 0% 0%"},
                 ),
                 dbc.Col(
                     [

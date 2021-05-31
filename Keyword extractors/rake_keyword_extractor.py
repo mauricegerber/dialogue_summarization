@@ -238,7 +238,7 @@ print(r.get_ranked_phrases_with_scores()) # To get keyword phrases ranked highes
 #print(r.get_ranked_phrases())
 #words.append(' '.join(r.get_ranked_phrases()))
 
-
+print(r.get_ranked_phrases())
 words_list = set(word_tokenize(text))
 #print(words_list)
 

@@ -1,4 +1,5 @@
 import math
+import string
 import time
 from datetime import datetime
 
@@ -6,7 +7,8 @@ import dash
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 
-from summa import keywords as summa_keywords
+from nltk.tokenize import word_tokenize
+from rake_nltk import Rake
 from yake import KeywordExtractor
 from keybert import KeyBERT
 
@@ -38,10 +40,24 @@ def callback_update_transcript_table_and_filters(app, transcripts):
         State(component_id="keyword_extraction_method_selector", component_property="value"),
         State(component_id="transcript_table", component_property="columns"),
         State(component_id="transcript_table", component_property="style_cell_conditional"),
+        State(component_id="language_radio_button", component_property="value"),
+        State(component_id="rake_n_kws", component_property="value"),
+        State(component_id="rake_min_kw_len", component_property="value"),
+        State(component_id="rake_max_kw_len", component_property="value"),
+        State(component_id="yake_n_kws", component_property="value"),
+        State(component_id="yake_max_kw_len", component_property="value"),
+        State(component_id="yake_dd_threshold", component_property="value"),
+        State(component_id="keybert_n_kws", component_property="value"),
+        State(component_id="keybert_min_kw_len", component_property="value"),
+        State(component_id="keybert_max_kw_len", component_property="value"),
+        State(component_id="keybert_diversity", component_property="value"),
     )
     def update_transcript_table_and_filters(selected_transcript, selected_speaker, selected_start_time,
                                             selected_end_time, selected_timeline, search_term,
-                                            n_clicks, selected_methods, current_columns, current_style):
+                                            n_clicks, selected_methods, current_columns, current_style,
+                                            selected_language, rake_n_kws, rake_min_kw_len, rake_max_kw_len,
+                                            yake_n_kws, yake_max_kw_len, yake_dd_threshold,
+                                            keybert_n_kws, keybert_min_kw_len, keybert_max_kw_len, keybert_diversity):
         transcript = transcripts[int(selected_transcript)]
 
         timeline_min = transcript["Timestamp"][0]
@@ -86,6 +102,7 @@ def callback_update_transcript_table_and_filters(app, transcripts):
 
         if trigger == "apply_keyword_extraction_settings.n_clicks":
             column_names = [column["name"] for column in current_columns]
+            n_keywords = 3
             width = "50px"
 
             if "tf-idf" in selected_methods and "tf-idf" not in column_names:
@@ -93,7 +110,13 @@ def callback_update_transcript_table_and_filters(app, transcripts):
                 df = tfidf(documents)
                 tf_idf_keywords = []
                 for column in df:
-                    tf_idf_keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:3])))
+                    tf_idf_keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:n_keywords])))
+
+                for i in range(len(tf_idf_keywords)):
+                    tokens = word_tokenize(transcript["Utterance"].iloc[i])
+                    tokens = [s.translate(str.maketrans("", "", string.punctuation)) for s in tokens]
+                    if len(tokens) < n_keywords+1:
+                        tf_idf_keywords[i] = ""
                 transcript["tf-idf"] = tf_idf_keywords
                 current_columns.append({"name": "tf-idf", "id": "tf-idf", "presentation": "markdown"})
                 column_names.append("tf-idf")
@@ -108,38 +131,39 @@ def callback_update_transcript_table_and_filters(app, transcripts):
                 except:
                     pass
 
-            if "textrank" in selected_methods and "textrank" not in column_names:
-                textrank_keywords = []
+            if "rake" in selected_methods:
+                r = Rake(language=selected_language, min_length=rake_min_kw_len, max_length=rake_max_kw_len)
+                rake_keywords = []
                 for utterance in transcript["Utterance"]:
-                    try:
-                        textrank_keywords.append(", ".join(summa_keywords.keywords(utterance, words=3).split("\n")))
-                    except:
-                        textrank_keywords.append("")
-                transcript["textrank"] = textrank_keywords
-                current_columns.append({"name": "textrank", "id": "textrank", "presentation": "markdown"})
-                column_names.append("textrank")
-                current_style.append({"if": {"column_id": "textrank"}, "width": width})
+                    r.extract_keywords_from_text(utterance)
+                    rake_keywords.append(", ".join(r.get_ranked_phrases()[:rake_n_kws]))
+                transcript["rake"] = rake_keywords
+                if "rake" not in current_columns and "rake" not in column_names and "rake" not in current_style:
+                    current_columns.append({"name": "rake", "id": "rake", "presentation": "markdown"})
+                    column_names.append("rake")
+                    current_style.append({"if": {"column_id": "rake"}, "width": width})
 
-            if "textrank" not in selected_methods:
+            if "rake" not in selected_methods:
                 try:
-                    transcript.drop(columns=["textrank"], inplace=True)
-                    current_columns.remove({"name": "textrank", "id": "textrank", "presentation": "markdown"})
-                    column_names.remove("textrank")
-                    current_style.remove({"if": {"column_id": "textrank"}, "width": width})
+                    transcript.drop(columns=["rake"], inplace=True)
+                    current_columns.remove({"name": "rake", "id": "rake", "presentation": "markdown"})
+                    column_names.remove("rake")
+                    current_style.remove({"if": {"column_id": "rake"}, "width": width})
                 except:
                     pass
 
-            if "yake" in selected_methods and "yake" not in column_names:
-                kw_extractor = KeywordExtractor(lan="en", n=1, top=3)
+            if "yake" in selected_methods:
+                kw_extractor = KeywordExtractor(lan=selected_language, top=yake_n_kws, n=yake_max_kw_len, dedupLim=yake_dd_threshold)
                 yake_keywords = []
                 for utterance in transcript["Utterance"]:
                     keywords = kw_extractor.extract_keywords(text=utterance)
                     keywords = [x for x, y in keywords]
                     yake_keywords.append(", ".join(keywords))
                 transcript["yake"] = yake_keywords
-                current_columns.append({"name": "yake", "id": "yake", "presentation": "markdown"})
-                column_names.append("yake")
-                current_style.append({"if": {"column_id": "yake"}, "width": width})
+                if "yake" not in current_columns and "yake" not in column_names and "yake" not in current_style:
+                    current_columns.append({"name": "yake", "id": "yake", "presentation": "markdown"})
+                    column_names.append("yake")
+                    current_style.append({"if": {"column_id": "yake"}, "width": width})
 
             if "yake" not in selected_methods:
                 try:
@@ -150,24 +174,27 @@ def callback_update_transcript_table_and_filters(app, transcripts):
                 except:
                     pass
             
-            if "bert" in selected_methods and "bert" not in column_names:
+            if "keybert" in selected_methods:
                 kw_extractor = KeyBERT("distilbert-base-nli-mean-tokens")
-                bert_keywords = []
+                kerybert_keywords = []
                 for utterance in transcript["Utterance"]:
-                    keywords = kw_extractor.extract_keywords(utterance, stop_words="english")
+                    keywords = kw_extractor.extract_keywords(utterance, stop_words=selected_language, use_mmr=False,
+                                                             keyphrase_ngram_range=(keybert_min_kw_len, keybert_max_kw_len),
+                                                             diversity=keybert_diversity)
                     keywords = [w for w, v in keywords]
-                    bert_keywords.append(", ".join(keywords[:3]))
-                transcript["bert"] = bert_keywords
-                current_columns.append({"name": "bert", "id": "bert", "presentation": "markdown"})
-                column_names.append("bert")
-                current_style.append({"if": {"column_id": "bert"}, "width": width})
+                    kerybert_keywords.append(", ".join(keywords[:keybert_n_kws]))
+                transcript["keybert"] = kerybert_keywords
+                if "keybert" not in current_columns and "keybert" not in column_names and "keybert" not in current_style:
+                    current_columns.append({"name": "keybert", "id": "keybert", "presentation": "markdown"})
+                    column_names.append("keybert")
+                    current_style.append({"if": {"column_id": "keybert"}, "width": width})
 
-            if "bert" not in selected_methods:
+            if "keybert" not in selected_methods:
                 try:
-                    transcript.drop(columns=["bert"], inplace=True)
-                    current_columns.remove({"name": "bert", "id": "bert", "presentation": "markdown"})
-                    column_names.remove("bert")
-                    current_style.remove({"if": {"column_id": "bert"}, "width": width})
+                    transcript.drop(columns=["keybert"], inplace=True)
+                    current_columns.remove({"name": "keybert", "id": "keybert", "presentation": "markdown"})
+                    column_names.remove("keybert")
+                    current_style.remove({"if": {"column_id": "keybert"}, "width": width})
                 except:
                     pass
 
@@ -188,8 +215,22 @@ def callback_update_transcript_table_and_filters(app, transcripts):
                 # therefore, it is stripped while highlighting (but not in the search field)
                 if search_term[-1] == " ":
                     transcript["Utterance"] = transcript["Utterance"].str.replace(search_term[:-1], "**" + search_term[:-1] + "**", case=False)
+                    try:
+                        transcript["tf-idf"] = transcript["tf-idf"].str.replace(search_term[:-1], "**" + search_term[:-1] + "**", case=False)
+                        transcript["rake"] = transcript["rake"].str.replace(search_term[:-1], "**" + search_term[:-1] + "**", case=False)
+                        transcript["yake"] = transcript["yake"].str.replace(search_term[:-1], "**" + search_term[:-1] + "**", case=False)
+                        transcript["keybert"] = transcript["keybert"].str.replace(search_term[:-1], "**" + search_term[:-1] + "**", case=False)
+                    except:
+                        pass
                 else:
                     transcript["Utterance"] = transcript["Utterance"].str.replace(search_term, "**" + search_term + "**", case=False)
+                    try:
+                        transcript["tf-idf"] = transcript["tf-idf"].str.replace(search_term, "**" + search_term + "**", case=False)
+                        transcript["rake"] = transcript["rake"].str.replace(search_term, "**" + search_term + "**", case=False)
+                        transcript["yake"] = transcript["yake"].str.replace(search_term, "**" + search_term + "**", case=False)
+                        transcript["keybert"] = transcript["keybert"].str.replace(search_term, "**" + search_term + "**", case=False)
+                    except:
+                        pass
                 marks = dict(zip(transcript["Timestamp"], ["|"] * len(transcript)))
                 
             if trigger == "start_time_input.value" or trigger == "end_time_input.value":

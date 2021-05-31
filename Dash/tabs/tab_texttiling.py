@@ -42,31 +42,6 @@ def tab_texttiling():
             [
                 dbc.Col(
                     [
-                        html.H5("Language"),
-                        dbc.RadioItems(
-                            id="language_radio_button",
-                            options=[
-                                {"label": "English", "value": "english"},
-                                {"label": "German", "value": "german"},
-                            ],
-                            value="english",
-                        ),
-                    ],
-                    width="auto",
-                ),
-                dbc.Col(
-                    [
-                        html.H5("Additional stopwords"),
-                        dbc.Input(
-                            id="stopwords_input",
-                            type="text",
-                            placeholder="Enter additional stopwords separated by comma",
-                        ),
-                    ],
-                    style={"margin": "0% 3% 0%"},
-                ),
-                dbc.Col(
-                    [
                         html.H5("Parameters"),
                         dbc.Row(
                             [
@@ -127,7 +102,6 @@ def tab_texttiling():
                         ),
                     ],
                     width="auto",
-                    style={"margin": "0% 3% 0% 0%"},
                 ),
                 dbc.Col(
                     [
