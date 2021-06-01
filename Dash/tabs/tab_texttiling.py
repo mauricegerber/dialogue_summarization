@@ -48,7 +48,7 @@ def tab_texttiling():
                                 dbc.Col(
                                     [
                                         html.Div("Pseudosentence"),
-                                        html.Div("length w"),
+                                        html.Div("length"),
                                     ],
                                     width="auto",
                                 ),
@@ -65,7 +65,7 @@ def tab_texttiling():
                                 ),
                                 dbc.Col(
                                     [
-                                        html.Div("Block size k"),
+                                        html.Div("Block size"),
                                     ],
                                     width="auto",
                                 ),
@@ -83,7 +83,7 @@ def tab_texttiling():
                                 dbc.Col(
                                     [
                                         html.Div("Number of"),
-                                        html.Div("subtopics n"),
+                                        html.Div("subtopics"),
                                     ],
                                     width="auto",
                                 ),
@@ -132,8 +132,7 @@ def tab_texttiling():
                     id="texttiling_table",
                     columns=[
                         {"name": "Time", "id": "Start time", "presentation": "markdown"},
-                        {"name": "Keywords (tf-idf)", "id": "Keywords (tf-idf)", "presentation": "markdown"},
-                        {"name": "Keywords (YAKE)", "id": "Keywords (YAKE)", "presentation": "markdown"},
+                        {"name": "Keywords", "id": "Keywords", "presentation": "markdown"},
                     ],
                     style_data_conditional=[
                         {"if": {"state": "selected"},

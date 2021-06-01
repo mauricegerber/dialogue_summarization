@@ -76,6 +76,51 @@ def tab_keywords():
             [
                 dbc.Col(
                     [
+                        html.H5("TF-IDF"),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        html.Div("Number of"),
+                                        html.Div("keywords"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="tfidf_n_kws",
+                                            type="number",
+                                            step=1,
+                                            value=3,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.RadioItems(
+                                            id="tfidf_radio_button",
+                                            options=[
+                                                {"label": "Implementation acc. to Karen Jones (1972)", "value": "karen_jones"},
+                                                {"label": "Implementation acc. to sklearn library", "value": "sklearn_library"},
+                                            ],
+                                            value="karen_jones",
+                                        ),
+                                    ],
+                                ),   
+                            ],
+                        ),
+                    ],
+                    width="auto",
+                ),
+            ],
+        ),
+        html.Div(style={"height": vertical_space2}),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
                         html.H5("RAKE"),
                         dbc.Row(
                             [
@@ -197,7 +242,7 @@ def tab_keywords():
                                             id="yake_dd_threshold",
                                             type="number",
                                             step=0.1,
-                                            value=0.9,
+                                            value=0,
                                         ),
                                     ],
                                     width="auto",

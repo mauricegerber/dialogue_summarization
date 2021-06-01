@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 
 def tab_textsplit():
     vertical_space = "15px"
-    tab = dbc.Tab(label="TextSplit", children=[
+    tab = dbc.Tab(label="Textsplit", children=[
         html.Div(style={"height": vertical_space}),
         dbc.Row(
             [

@@ -2,12 +2,14 @@ import math
 import string
 import time
 from datetime import datetime
+import pandas as pd
 
 import dash
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 
 from nltk.tokenize import word_tokenize
+from sklearn.feature_extraction.text import TfidfVectorizer
 from rake_nltk import Rake
 from yake import KeywordExtractor
 from keybert import KeyBERT
@@ -41,6 +43,8 @@ def callback_update_transcript_table_and_filters(app, transcripts):
         State(component_id="transcript_table", component_property="columns"),
         State(component_id="transcript_table", component_property="style_cell_conditional"),
         State(component_id="language_radio_button", component_property="value"),
+        State(component_id="tfidf_n_kws", component_property="value"),
+        State(component_id="tfidf_radio_button", component_property="value"),
         State(component_id="rake_n_kws", component_property="value"),
         State(component_id="rake_min_kw_len", component_property="value"),
         State(component_id="rake_max_kw_len", component_property="value"),
@@ -55,7 +59,8 @@ def callback_update_transcript_table_and_filters(app, transcripts):
     def update_transcript_table_and_filters(selected_transcript, selected_speaker, selected_start_time,
                                             selected_end_time, selected_timeline, search_term,
                                             n_clicks, selected_methods, current_columns, current_style,
-                                            selected_language, rake_n_kws, rake_min_kw_len, rake_max_kw_len,
+                                            selected_language, tfidf_n_kws, tfidf_method,
+                                            rake_n_kws, rake_min_kw_len, rake_max_kw_len,
                                             yake_n_kws, yake_max_kw_len, yake_dd_threshold,
                                             keybert_n_kws, keybert_min_kw_len, keybert_max_kw_len, keybert_diversity):
         transcript = transcripts[int(selected_transcript)]
@@ -102,25 +107,35 @@ def callback_update_transcript_table_and_filters(app, transcripts):
 
         if trigger == "apply_keyword_extraction_settings.n_clicks":
             column_names = [column["name"] for column in current_columns]
-            n_keywords = 3
             width = "50px"
 
-            if "tf-idf" in selected_methods and "tf-idf" not in column_names:
+            if "tf-idf" in selected_methods:
                 documents = transcript["Utterance"].str.lower().tolist()
-                df = tfidf(documents)
+
+                if tfidf_method == "karen_jones":
+                    df = tfidf(documents)
+                else:
+                    vectorizer = TfidfVectorizer()
+                    vectors = vectorizer.fit_transform(documents)
+                    feature_names = vectorizer.get_feature_names()
+                    dense = vectors.todense()
+                    denselist = dense.tolist()
+                    df = pd.DataFrame(denselist, columns=feature_names).transpose()
+                
                 tf_idf_keywords = []
                 for column in df:
-                    tf_idf_keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:n_keywords])))
+                    tf_idf_keywords.append(", ".join(list(df[column].sort_values(ascending=False).index[:tfidf_n_kws])))
 
                 for i in range(len(tf_idf_keywords)):
                     tokens = word_tokenize(transcript["Utterance"].iloc[i])
                     tokens = [s.translate(str.maketrans("", "", string.punctuation)) for s in tokens]
-                    if len(tokens) < n_keywords+1:
+                    if len(tokens) < tfidf_n_kws+1:
                         tf_idf_keywords[i] = ""
                 transcript["tf-idf"] = tf_idf_keywords
-                current_columns.append({"name": "tf-idf", "id": "tf-idf", "presentation": "markdown"})
-                column_names.append("tf-idf")
-                current_style.append({"if": {"column_id": "tf-idf"}, "width": width})
+                if "tf-idf" not in current_columns and "tf-idf" not in column_names and "tf-idf" not in current_style:
+                    current_columns.append({"name": "tf-idf", "id": "tf-idf", "presentation": "markdown"})
+                    column_names.append("tf-idf")
+                    current_style.append({"if": {"column_id": "tf-idf"}, "width": width})
 
             if "tf-idf" not in selected_methods:
                 try:
@@ -176,14 +191,14 @@ def callback_update_transcript_table_and_filters(app, transcripts):
             
             if "keybert" in selected_methods:
                 kw_extractor = KeyBERT("distilbert-base-nli-mean-tokens")
-                kerybert_keywords = []
+                keybert_keywords = []
                 for utterance in transcript["Utterance"]:
-                    keywords = kw_extractor.extract_keywords(utterance, stop_words=selected_language, use_mmr=False,
+                    keywords = kw_extractor.extract_keywords(utterance, stop_words=selected_language, use_mmr=True,
                                                              keyphrase_ngram_range=(keybert_min_kw_len, keybert_max_kw_len),
                                                              diversity=keybert_diversity)
                     keywords = [w for w, v in keywords]
-                    kerybert_keywords.append(", ".join(keywords[:keybert_n_kws]))
-                transcript["keybert"] = kerybert_keywords
+                    keybert_keywords.append(", ".join(keywords[:keybert_n_kws]))
+                transcript["keybert"] = keybert_keywords
                 if "keybert" not in current_columns and "keybert" not in column_names and "keybert" not in current_style:
                     current_columns.append({"name": "keybert", "id": "keybert", "presentation": "markdown"})
                     column_names.append("keybert")

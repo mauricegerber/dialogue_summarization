@@ -1,6 +1,7 @@
 import sys
 import os
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # add absolute path to main directory "summarization" to system paths
 sys.path.insert(0, os.path.split(sys.path[0])[0])
@@ -19,3 +20,11 @@ for line in f:
 pd.set_option("display.max_rows", 1000)
 df = tfidf(sentences)
 print(df)
+
+vectorizer = TfidfVectorizer()
+vectors = vectorizer.fit_transform(sentences)
+feature_names = vectorizer.get_feature_names()
+dense = vectors.todense()
+denselist = dense.tolist()
+df2 = pd.DataFrame(denselist, columns=feature_names)
+print(df2.transpose())
