@@ -40,7 +40,7 @@ def tab_textsplit():
                         dbc.RadioItems(
                             id="break_condition_radio_button",
                             options=[
-                                {"label": "Max splits", "value": "max_splits"},
+                                {"label": "Number of subtopics", "value": "max_splits"},
                                 {"label": "Min gain", "value": "min_gain"},
                             ],
                             value="max_splits",
@@ -55,7 +55,8 @@ def tab_textsplit():
                             [
                                 dbc.Col(
                                     [
-                                        html.Div("Max splits"),
+                                        html.Div("Number of"),
+                                        html.Div("subtopics"),
                                     ],
                                     width="auto",
                                 ),
@@ -65,7 +66,7 @@ def tab_textsplit():
                                             id="max_splits_input",
                                             type="number",
                                             step=1,
-                                            value=2,
+                                            value=3,
                                         ),
                                     ],
                                     width="auto",

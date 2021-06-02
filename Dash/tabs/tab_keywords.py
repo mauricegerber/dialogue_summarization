@@ -62,7 +62,7 @@ def tab_keywords():
                     [
                         html.Div(style={"height": "27px"}),
                         dbc.Button(
-                            "Apply",
+                            "Apply to Transcript tab",
                             id="apply_keyword_extraction_settings",
                             className="btn-outline-primary",
                         ),
@@ -232,7 +232,7 @@ def tab_keywords():
                                 dbc.Col(
                                     [
                                         html.Div("Deduplication threshold"),
-                                        html.Div("in the interval [0, 1["),
+                                        html.Div("in the interval [0, 1]"),
                                     ],
                                     width="auto",
                                 ),

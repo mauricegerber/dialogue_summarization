@@ -133,11 +133,18 @@ def callback_apply_texttiling(app, transcripts):
                     pass
 
             if "yake" in selected_methods:
-                kw_extractor = KeywordExtractor(lan=selected_language, top=yake_n_kws, n=yake_max_kw_len, dedupLim=yake_dd_threshold)
+                if selected_language == "english":
+                    lan = "en"
+                else:
+                    lan = "de"
+                kw_extractor = KeywordExtractor(lan=lan, top=yake_n_kws, n=yake_max_kw_len, dedupLim=yake_dd_threshold)
                 yake_keywords = []
                 for subtopic in subtopics:
                     keywords = kw_extractor.extract_keywords(text=subtopic)
-                    keywords = [x for x, y in keywords]
+                    if yake_dd_threshold < 1:
+                        keywords = [x for x, y in keywords]
+                    else:
+                        keywords = [y for x, y in keywords]
                     yake_keywords.append(", ".join(keywords))
                 keywords_table["yake"] = yake_keywords
                 if "yake" not in current_columns and "yake" not in column_names and "yake":
@@ -158,7 +165,7 @@ def callback_apply_texttiling(app, transcripts):
                 kw_extractor = KeyBERT("distilbert-base-nli-mean-tokens")
                 kerybert_keywords = []
                 for subtopic in subtopics:
-                    keywords = kw_extractor.extract_keywords(subtopic, stop_words=selected_language, use_mmr=True,
+                    keywords = kw_extractor.extract_keywords(subtopic, stop_words=sw, use_mmr=True,
                                                              keyphrase_ngram_range=(keybert_min_kw_len, keybert_max_kw_len),
                                                              diversity=keybert_diversity)
                     keywords = [w for w, v in keywords]
@@ -205,7 +212,7 @@ def callback_apply_texttiling(app, transcripts):
                 mode="lines"
             ))
             fig.update_layout(
-                xaxis_title="Gap between pseudosentences",
+                xaxis_title="Gap",
                 yaxis_title="Depth score",
             )
 

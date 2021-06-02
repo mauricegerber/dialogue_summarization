@@ -8,6 +8,7 @@ import dash
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 
+from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from rake_nltk import Rake
@@ -168,11 +169,18 @@ def callback_update_transcript_table_and_filters(app, transcripts):
                     pass
 
             if "yake" in selected_methods:
-                kw_extractor = KeywordExtractor(lan=selected_language, top=yake_n_kws, n=yake_max_kw_len, dedupLim=yake_dd_threshold)
+                if selected_language == "english":
+                    lan = "en"
+                else:
+                    lan = "de"
+                kw_extractor = KeywordExtractor(lan=lan, top=yake_n_kws, n=yake_max_kw_len, dedupLim=yake_dd_threshold)
                 yake_keywords = []
                 for utterance in transcript["Utterance"]:
                     keywords = kw_extractor.extract_keywords(text=utterance)
-                    keywords = [x for x, y in keywords]
+                    if yake_dd_threshold < 1:
+                        keywords = [x for x, y in keywords]
+                    else:
+                        keywords = [y for x, y in keywords]
                     yake_keywords.append(", ".join(keywords))
                 transcript["yake"] = yake_keywords
                 if "yake" not in current_columns and "yake" not in column_names and "yake" not in current_style:
@@ -190,10 +198,11 @@ def callback_update_transcript_table_and_filters(app, transcripts):
                     pass
             
             if "keybert" in selected_methods:
+                sw = stopwords.words(selected_language)
                 kw_extractor = KeyBERT("distilbert-base-nli-mean-tokens")
                 keybert_keywords = []
                 for utterance in transcript["Utterance"]:
-                    keywords = kw_extractor.extract_keywords(utterance, stop_words=selected_language, use_mmr=True,
+                    keywords = kw_extractor.extract_keywords(utterance, stop_words=sw, use_mmr=True,
                                                              keyphrase_ngram_range=(keybert_min_kw_len, keybert_max_kw_len),
                                                              diversity=keybert_diversity)
                     keywords = [w for w, v in keywords]

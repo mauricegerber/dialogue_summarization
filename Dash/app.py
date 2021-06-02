@@ -37,7 +37,7 @@ app.title = "Dialog Analyzer"
 
 transcripts_dir = "./transcripts/"
 transcript_files = os.listdir(transcripts_dir)
-initial_transcript_index = 0
+initial_transcript_index = 4
 
 transcripts = []
 for file in transcript_files:
