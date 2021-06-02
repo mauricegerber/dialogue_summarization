@@ -189,24 +189,24 @@ def callback_apply_textsplit(app, transcripts):
 
             fig = go.Figure()
             fig["layout"] = go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})
-            # for i in range(len(boundaries)):
-            #     fig.add_shape(
-            #         type="line",
-            #         x0=boundaries[i],
-            #         y0=0,
-            #         x1=boundaries[i],
-            #         y1=max(depth_scores),
-            #         line=dict(
-            #             color="DarkOrange",
-            #             width=3,
-            #             dash="dot",
-            #     ))
-            #     fig.add_annotation(
-            #         x=boundaries[i],
-            #         y=max(depth_scores)+0.03,
-            #         text=transcript["Time"][normalized_boundaries[i+1]],
-            #         showarrow=False,
-            #     )
+            for i in range(len(splits)):
+                fig.add_shape(
+                    type="line",
+                    x0=splits[i],
+                    y0=0,
+                    x1=splits[i],
+                    y1=max(lengths_optimal),
+                    line=dict(
+                        color="DarkOrange",
+                        width=3,
+                        dash="dot",
+                ))
+                fig.add_annotation(
+                    x=splits[i],
+                    y=max(lengths_optimal)+max(lengths_optimal)*0.1,
+                    text=transcript["Time"][normalized_splits[i+1]],
+                    showarrow=False,
+                )
             fig.add_trace(go.Scatter(
                 x=list(range(len(lengths_optimal))),
                 y=lengths_optimal,

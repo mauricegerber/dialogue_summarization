@@ -14,6 +14,11 @@ from itertools import chain, groupby, product
 import nltk
 from enum import Enum
 from nltk.tokenize import wordpunct_tokenize, word_tokenize
+from nltk.corpus import stopwords
+
+
+#print(string.punctuation)
+#print(stopwords.words("english"))
 
 
 class Metric(Enum):
@@ -225,7 +230,7 @@ sentences = []
 for line in f:
     sentences.append(line.strip("\n"))
     #print(sentences)
-#sentences = sentences[2:]
+sentences = sentences[2:]
 #print(sentences)
 
 r = Rake() # Uses stopwords for english from NLTK, and all puntuation characters.
@@ -234,12 +239,12 @@ text = ''
 for sentence in sentences:
     text = text + sentence + ' '
 r.extract_keywords_from_text(text)
-print(r.get_ranked_phrases_with_scores()) # To get keyword phrases ranked highest to lowest.
-#print(r.get_ranked_phrases())
+#print(r.get_ranked_phrases_with_scores()) # To get keyword phrases ranked highest to lowest.
+print(r.get_ranked_phrases())
 #words.append(' '.join(r.get_ranked_phrases()))
 
 print(r.get_ranked_phrases())
-words_list = set(word_tokenize(text))
-#print(words_list)
+words_list = set(word_tokenize(sentences[2]))
+# print(words_list)
 
 
