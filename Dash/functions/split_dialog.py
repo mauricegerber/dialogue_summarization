@@ -19,7 +19,7 @@ def split_dialog(data, steps, use_all=True, n=15):
     last_min = data[nrow]["Time"]
     l_min = analyse_minute(last_min)
 
-    minutes_seq = range(0, l_min+steps, steps)
+    minutes_seq = range(0, l_min+steps+1, steps)
     minutes = minutes_seq[1:]
     
     

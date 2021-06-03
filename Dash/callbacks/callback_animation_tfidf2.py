@@ -1,6 +1,7 @@
 import math
 import random
 import pandas as pd
+pd.options.mode.chained_assignment = None
 
 import dash
 from dash.dependencies import Input, Output, State
@@ -23,6 +24,8 @@ def callback_animation_tfidf2(app, transcripts):
             transcript = transcripts[int(selected_transcript)]
             data = transcript.to_dict("records")
             tf_dict, idf_dict, tfidf_dict, min_seq = tf_idf(data, slct_min)
+
+            marks={i: str(min_seq[i-1])+"-"+str(min_seq[i])+" min" for i in range(1,len(min_seq))}
 
             for word, score in tfidf_dict.copy().items():
                 if sum(score) < 0.002:
@@ -157,12 +160,13 @@ def callback_animation_tfidf2(app, transcripts):
                 },
                 "transition": {"duration": 400, "easing": "linear"},
                 "pad": {"b": 10, "t": 50},
-                "len": 0.9,
+                "len": 0.875,
                 "x": 0.1,
                 "y": 0,
+                "ticklen": 12,
                 "steps": []
             }
-
+            
             # make data
             block = blocks[0]
             dataset_by_block = df[df["block"] == block]
@@ -220,7 +224,7 @@ def callback_animation_tfidf2(app, transcripts):
                     "mode": "immediate",
                     "transition": {"duration": 0}}
                 ],
-                    "label": block,
+                    "label": marks[block],
                     "method": "animate"}
                 sliders_dict["steps"].append(slider_step)
 

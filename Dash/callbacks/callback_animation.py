@@ -23,7 +23,10 @@ def callback_animation(app, transcripts):
             transcript = transcripts[int(selected_transcript)]
             data = transcript.to_dict("records")
             words, min_seq, word_counts = split_dialog(data, slct_min)
-
+            
+            min_rev = list(min_seq)[::-1]
+            marks={i-1: str(min_rev[i])+"-"+str(min_rev[i-1])+" min" for i in range(1,len(min_seq))}
+            
             for word, counts in word_counts.copy().items():
                 if sum(counts) <= len(min_seq):
                     del word_counts[word]
@@ -128,9 +131,10 @@ def callback_animation(app, transcripts):
                 },
                 "transition": {"duration": 400, "easing": "linear"},
                 "pad": {"b": 10, "t": 50},
-                "len": 0.9,
+                "len": 0.875,
                 "x": 0.1,
                 "y": 0,
+                "ticklen": 12,
                 "steps": []
             }
 
@@ -179,7 +183,7 @@ def callback_animation(app, transcripts):
                     "mode": "immediate",
                     "transition": {"duration": 0}}
                 ],
-                    "label": block,
+                    "label": marks[block],
                     "method": "animate"}
                 sliders_dict["steps"].append(slider_step)
 

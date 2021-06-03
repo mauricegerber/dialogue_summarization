@@ -19,7 +19,7 @@ def tf_idf(data, steps):
     last_min = data[nrow]["Time"]
     l_min = analyse_minute(last_min)
 
-    minutes_seq = range(0, l_min+steps, steps)
+    minutes_seq = range(0, l_min+steps+1, steps)
     minutes = minutes_seq[1:]
     
     uniqueWords = set()
@@ -58,7 +58,7 @@ def tf_idf(data, steps):
     for i in range(nrow+1):
         t = data[i]["Utterance"]
         min_count = analyse_minute(data[i]["Time"])
-
+     
         if min_count < minutes[index_min]:
             text += " " + t.lower()
             
