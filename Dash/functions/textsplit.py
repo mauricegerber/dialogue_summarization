@@ -1,5 +1,5 @@
-#import word2vec
-from gensim.models import word2vec
+import word2vec
+#from gensim.models import word2vec
 import pandas as pd
 from nltk.tokenize import sent_tokenize
 from sklearn.feature_extraction.text import CountVectorizer

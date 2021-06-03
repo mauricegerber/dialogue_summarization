@@ -24,8 +24,7 @@ def callback_animation(app, transcripts):
             data = transcript.to_dict("records")
             words, min_seq, word_counts = split_dialog(data, slct_min)
             
-            min_rev = list(min_seq)[::-1]
-            marks={i-1: str(min_rev[i])+"-"+str(min_rev[i-1])+" min" for i in range(1,len(min_seq))}
+            marks={i-1: str(min_seq[i-1])+"-"+str(min_seq[i])+" min" for i in range(1,len(min_seq))}
             
             for word, counts in word_counts.copy().items():
                 if sum(counts) <= len(min_seq):

@@ -13,6 +13,22 @@ def tab_wordcloud_draft():
             [
                 dbc.Col(
                     [
+                        html.Div(
+                            children=[
+                                html.Span("This tab provides an graphical overview over the most frequent used words in each block. "),
+                                html.Span("With the parameters the block length in minutes can be adjusted and the block is being selected with the slider. "),
+                                html.Span("The bigger the size of a word, the more frequent it is used in the selected paragraph."),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        ),
+        html.Div(style={"height": vertical_space}),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
                         html.H5("Parameters"),
                         dbc.Row(
                             [
