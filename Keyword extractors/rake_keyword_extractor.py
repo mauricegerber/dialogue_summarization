@@ -16,11 +16,6 @@ from enum import Enum
 from nltk.tokenize import wordpunct_tokenize, word_tokenize
 from nltk.corpus import stopwords
 
-
-#print(string.punctuation)
-#print(stopwords.words("english"))
-
-
 class Metric(Enum):
     """Different metrics that can be used for ranking."""
 
@@ -214,7 +209,6 @@ class Rake(object):
                 lambda x: self.min_length <= len(x) <= self.max_length, phrases
             )
         )
-
 
 
 # https://pypi.org/project/rake-nltk/
