@@ -59,10 +59,16 @@ def tab_wordcloud_tfidf():
             [
                 dbc.Col(
                     [
-                        dcc.Graph(
-                            id="animation_tfidf",
-                            figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
-                            config={"displayModeBar": False},
+                        dcc.Loading(
+                            id="loading_wctfidf",
+                            color="#1a1a1a",
+                            children=[
+                                dcc.Graph(
+                                    id="animation_tfidf",
+                                    figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                    config={"displayModeBar": False},
+                                ),
+                            ],
                         ),
                     ],
                 ),

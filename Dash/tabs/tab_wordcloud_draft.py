@@ -60,11 +60,17 @@ def tab_wordcloud_draft():
             [
                 dbc.Col(
                     [
-                        dcc.Graph(
-                            id="wordcloud_plot",
-                            figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
-                            #config={"displayModeBar": False},
-                            #style={"height": "600px"},
+                        dcc.Loading(
+                            id="loading_wcdraft",
+                            color="#1a1a1a",
+                            children=[
+                                dcc.Graph(
+                                    id="wordcloud_plot",
+                                    figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                    #config={"displayModeBar": False},
+                                    #style={"height": "600px"},
+                                ),
+                            ],
                         ),
                     ],
                 ),

@@ -16,8 +16,9 @@ def callback_animation_tfidf2(app, transcripts):
         Input(component_id="apply_wordcloud_settings4", component_property="n_clicks"),
         State(component_id="transcript_selector", component_property="value"),
         State(component_id="textblock_length_input4", component_property="value"),
+        State(component_id="n_highest_scores_input", component_property="value"),
     )
-    def animation_tfidf(n_clicks, selected_transcript, slct_min):
+    def animation_tfidf(n_clicks, selected_transcript, slct_min, n_highest_scores):
         if dash.callback_context.triggered[0]["prop_id"] == "apply_wordcloud_settings4.n_clicks":
             transcript = transcripts[int(selected_transcript)]
             data = transcript.to_dict("records")
@@ -72,17 +73,32 @@ def callback_animation_tfidf2(app, transcripts):
             scaler2 = MinMaxScaler()
             df["opacity"] = scaler2.fit_transform(df["score"].values.reshape(-1,1))
             
-            if len(df) < 1000:
-                df.loc[df["score"] < 0.003, ["marker_size"]] = 1
-                df.loc[df["score"] < 0.003, ["opacity"]] = 0
+            def Nlargestelement(l, n):
+                l = list(l)
+                Nlargestelement_list = []
+  
+                for i in range(0, n): 
+                    max_value = 0
+                    
+                    for j in range(len(l)):     
+                        if l[j] > max_value:
+                            max_value = l[j]
+                            
+                    l.remove(max_value)
+                    Nlargestelement_list.append(max_value)
+                return min(Nlargestelement_list)
             
-            if len(df) < 5000:
-                df.loc[df["score"] < 0.0035, ["marker_size"]] = 1
-                df.loc[df["score"] < 0.0035, ["opacity"]] = 0
+            # if len(df) < 1000:
+            #     df.loc[df["score"] < 0.003, ["marker_size"]] = 1
+            #     df.loc[df["score"] < 0.003, ["opacity"]] = 0
             
-            else:
-                df.loc[df["score"] < 0.004, ["marker_size"]] = 1
-                df.loc[df["score"] < 0.004, ["opacity"]] = 0
+            # if len(df) < 5000:
+            #     df.loc[df["score"] < 0.0035, ["marker_size"]] = 1
+            #     df.loc[df["score"] < 0.0035, ["opacity"]] = 0
+            
+            # else:
+            #     df.loc[df["score"] < 0.004, ["marker_size"]] = 1
+            #     df.loc[df["score"] < 0.004, ["opacity"]] = 0
 
             blocks = df["block"].unique().tolist()
 
@@ -151,6 +167,10 @@ def callback_animation_tfidf2(app, transcripts):
             block = blocks[0]
             dataset_by_block = df[df["block"] == block]
 
+            n_word_score = Nlargestelement(dataset_by_block["score"], n_highest_scores)
+            dataset_by_block.loc[dataset_by_block["score"] < n_word_score, ["marker_size"]] = 1
+            dataset_by_block.loc[dataset_by_block["score"] < n_word_score, ["opacity"]] = 0
+
             data_dict = {
                 "x": list(dataset_by_block["x"]),
                 "y": list(dataset_by_block["y"]),
@@ -163,12 +183,18 @@ def callback_animation_tfidf2(app, transcripts):
                     "opacity": list(dataset_by_block["opacity"]),
                     "size": list(dataset_by_block["marker_size"]),
                 },
+                "customdata": dataset_by_block["score"],
+                "hovertemplate": '%{text}<br>TF-IDF-Score: %{customdata:.3f}<extra></extra>'
             }
             fig_dict["data"].append(data_dict)
 
             for block in blocks:
                 frame = {"data": [], "name": str(block)}
                 dataset_by_block = df[df["block"] == block]
+
+                n_word_score = Nlargestelement(dataset_by_block["score"], n_highest_scores)
+                dataset_by_block.loc[dataset_by_block["score"] < n_word_score, ["marker_size"]] = 1
+                dataset_by_block.loc[dataset_by_block["score"] < n_word_score, ["opacity"]] = 0
         
                 data_dict = {
                     "x": list(dataset_by_block["x"]),
@@ -182,6 +208,8 @@ def callback_animation_tfidf2(app, transcripts):
                         "opacity": list(dataset_by_block["opacity"]),
                         "size": list(dataset_by_block["marker_size"])
                     },
+                    "customdata": dataset_by_block["score"],
+                    "hovertemplate": '%{text}<br>TF-IDF-Score: %{customdata:.3f}<extra></extra>'
                 }
                 frame["data"].append(data_dict)
 

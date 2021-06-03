@@ -35,6 +35,26 @@ def tab_wordcloud_tfidf2():
                                     ],
                                     width="auto",
                                 ),
+
+                                dbc.Col(
+                                    [
+                                        html.Div("Show the n-highest scores"),
+                                    ],
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Input(
+                                            id="n_highest_scores_input",
+                                            type="number",
+                                            min=1,
+                                            max=100,
+                                            step=1,
+                                            value=5,
+                                        ),
+                                    ],
+                                    width="auto",
+                                ),
                             ],
                         ),
                     ],
@@ -59,10 +79,16 @@ def tab_wordcloud_tfidf2():
             [
                 dbc.Col(
                     [
-                        dcc.Graph(
-                            id="animation_tfidf2",
-                            figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
-                            config={"displayModeBar": False},
+                        dcc.Loading(
+                            id="loading_wctfidf2",
+                            color="#1a1a1a",
+                            children=[
+                                dcc.Graph(
+                                    id="animation_tfidf2",
+                                    figure={'layout': go.Layout(margin={'t': 0, "b":0, "r":0, "l":0})},
+                                    config={"displayModeBar": False},
+                                ),
+                            ],
                         ),
                     ],
                 ),
