@@ -153,6 +153,8 @@ def callback_animation(app, transcripts):
                     "opacity": list(dataset_by_block["opacity"]),
                     "size": list(dataset_by_block["marker_size"]),
                 },
+                "customdata": dataset_by_block["count"],
+                "hovertemplate": '%{text}<br>Frequency: %{customdata}<extra></extra>'
             }
             fig_dict["data"].append(data_dict)
 
@@ -172,6 +174,8 @@ def callback_animation(app, transcripts):
                         "opacity": list(dataset_by_block["opacity"]),
                         "size": list(dataset_by_block["marker_size"])
                     },
+                    "customdata": dataset_by_block["count"],
+                    "hovertemplate": '%{text}<br>Frequency: %{customdata}<extra></extra>'
                 }
                 frame["data"].append(data_dict)
 
