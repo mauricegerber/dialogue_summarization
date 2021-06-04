@@ -14,8 +14,10 @@ def tab_wordcloud_animation():
                     [
                         html.Div(
                             children=[
-                                html.Span("This tab illustrates an animated wordcloud of each block "),
-                                html.Span("The block length in minutes can be adjusted. "),
+                                html.Span("This tab illustrates an animated Wordcloud. "),
+                                html.Span("With the "),
+                                html.I("Textblock length "),
+                                html.Span("Parameter the block length in minutes can be adjusted. "),
                                 html.Span("If the play button is clicked, the animation runs through each block and depicts the most frequent used word. "),
                                 html.Span("The slider can also be varried manually. The size of the circle and the text shows the frequency of the word. "),
                                 html.Span("Circels are added to ensure a smooth transition. "),
