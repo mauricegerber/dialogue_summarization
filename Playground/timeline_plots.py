@@ -2,6 +2,8 @@ import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
+import numpy as np
+import math
 pio.kaleido.scope.default_format = "png"
 pio.kaleido.scope.default_width = 1920
 pio.kaleido.scope.default_height = 500
@@ -13,17 +15,28 @@ timestamps_textsplit = ["00:00", "05:15", "10:00"]
 def convert_to_seconds(t):
     return int(t[:2])*60 + int(t[3:])
 
+
 timestamps_human_s = [convert_to_seconds(t) for t in timestamps_human]
 timestamps_texttiling_s = [convert_to_seconds(t) for t in timestamps_human]
 timestamps_textsplit_s = [convert_to_seconds(t) for t in timestamps_human]
 
+# end_transcript = "12:23"
+# con_end = convert_to_seconds(end_transcript)
+# time_seq = np.linspace(0, con_end, 7)
+# print(list(time_seq))
+# ticks={i: str(math.floor(time_seq[i]/60))+str(math.floor(math.modf(time_seq[i]/60)[0]*60))
+#     +" min" for i in range(1,len(time_seq))}
+
+# print(ticks)
+
+y_position = [0.35, 0.5, 0.65]
 
 fig = go.Figure()
-fig["layout"] = go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0})
+fig["layout"] = go.Layout(margin={"t": 0, "b": 0, "r": 0, "l": 0}, plot_bgcolor="rgba(0,0,0,0)")
 
 fig.add_trace(go.Scatter(
     x=timestamps_human_s,
-    y=[0.75] * len(timestamps_human_s),
+    y=[y_position[2]] * len(timestamps_human_s),
     mode="lines",
     line=dict(width=4)
 ))
@@ -31,9 +44,9 @@ for i in range(1, len(timestamps_human_s)-1):
     fig.add_shape(
         type="line",
         x0=timestamps_human_s[i],
-        y0=0.7,
+        y0=y_position[2]-0.05,
         x1=timestamps_human_s[i],
-        y1=0.8,
+        y1=y_position[2]+0.05,
         line=dict(
             color="DarkOrange",
             width=3,
@@ -42,7 +55,7 @@ for i in range(1, len(timestamps_human_s)-1):
 
 fig.add_trace(go.Scatter(
     x=timestamps_texttiling_s ,
-    y=[0.5] * len(timestamps_texttiling_s ),
+    y=[y_position[1]] * len(timestamps_texttiling_s ),
     mode="lines",
     line=dict(width=4)
 ))
@@ -50,9 +63,9 @@ for i in range(1, len(timestamps_texttiling_s )-1):
     fig.add_shape(
         type="line",
         x0=timestamps_texttiling_s [i],
-        y0=0.45,
+        y0=y_position[1]-0.05,
         x1=timestamps_texttiling_s [i],
-        y1=0.55,
+        y1=y_position[1]+0.05,
         line=dict(
             color="DarkOrange",
             width=3,
@@ -61,7 +74,7 @@ for i in range(1, len(timestamps_texttiling_s )-1):
 
 fig.add_trace(go.Scatter(
     x=timestamps_textsplit_s,
-    y=[0.25] * len(timestamps_textsplit_s ),
+    y=[y_position[0]] * len(timestamps_textsplit_s ),
     mode="lines",
     line=dict(width=4)
 ))
@@ -69,9 +82,9 @@ for i in range(1, len(timestamps_textsplit_s )-1):
     fig.add_shape(
         type="line",
         x0=timestamps_textsplit_s [i],
-        y0=0.2,
+        y0=y_position[0]-0.05,
         x1=timestamps_textsplit_s [i],
-        y1=0.3,
+        y1=y_position[0]+0.05,
         line=dict(
             color="DarkOrange",
             width=3,
@@ -100,7 +113,8 @@ fig.update_yaxes(
     gridwidth=grid_line_width,
     tickfont=axes_tick_font,
     tick0=0,
-    dtick=0.1
+    dtick=0.1,
+    visible = False
 )
 fig.show()
 # fig.write_image("./Algorithms/texttiling_gap_score.png")
