@@ -64,8 +64,6 @@ def callback_animation_tfidf2(app, transcripts):
                     tfidf_col.append(score[i])
                 iteration_counter += 1
             df = pd.DataFrame({'word': word_col, 'block': block_col, 'x': gridx_col, 'y': gridy_col, 'score': tfidf_col})
-            # pd.set_option("display.max_rows", None, "display.max_columns", None)
-            # print(df)
 
             num_blocks = range(1,len(min_seq))
             max_block = len(min_seq)-1
@@ -90,18 +88,6 @@ def callback_animation_tfidf2(app, transcripts):
                     l.remove(max_value)
                     Nlargestelement_list.append(max_value)
                 return min(Nlargestelement_list)
-            
-            # if len(df) < 1000:
-            #     df.loc[df["score"] < 0.003, ["marker_size"]] = 1
-            #     df.loc[df["score"] < 0.003, ["opacity"]] = 0
-            
-            # if len(df) < 5000:
-            #     df.loc[df["score"] < 0.0035, ["marker_size"]] = 1
-            #     df.loc[df["score"] < 0.0035, ["opacity"]] = 0
-            
-            # else:
-            #     df.loc[df["score"] < 0.004, ["marker_size"]] = 1
-            #     df.loc[df["score"] < 0.004, ["opacity"]] = 0
 
             blocks = df["block"].unique().tolist()
 

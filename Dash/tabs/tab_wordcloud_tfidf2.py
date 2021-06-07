@@ -6,7 +6,29 @@ import plotly.graph_objects as go
 
 def tab_wordcloud_tfidf2():
     vertical_space = "15px"
-    tab = dbc.Tab(label="Wordcloud TF-IDF 2", children=[
+    tab = dbc.Tab(label="Wordcloud TF-IDF", children=[
+        html.Div(style={"height": vertical_space}),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.Div(
+                            children=[
+                                html.Span("This tab depicts a animated graphic of the TF-IDF algorithm as a Wordcloud. "),
+                                html.Span("With the Parameter "),
+                                html.I("Textblock length "),
+                                html.Span("the block length is adjusted. "),
+                                html.Span("The second Parameter "),
+                                html.I("n-highest score "),
+                                html.Span("means that only words equal or above the n-highest TF-IDF score are depicted. As an example if it is set to 5, all the items equal and above the 5 highest score are illustrated. "),
+                                html.Span("Consequently there are at least 5 words. However, because words can have the same score, more than 5 can appear. "),
+                                html.Span("With the play button the animation runs through the different blocks and illustrates the highest TF-IDF scores of the words in the individual block. "),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        ),
         html.Div(style={"height": vertical_space}),
         dbc.Row(
             [

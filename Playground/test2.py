@@ -140,94 +140,97 @@ while True:
     print("score: ", score)
     print("---")
 
-# coord_texts = ["0", "1", "2", "3", "4", "5"]
-# fig = go.Figure()
-# fig.add_trace(go.Scatter3d(
-#     x=cumvecs[:,0],
-#     y=cumvecs[:,1],
-#     z=cumvecs[:,2],
-#     text=coord_texts,
-#     textfont=dict(
-#         family="Times",
-#         size=20,
-#     ),
-#     mode="text",
-# ))
-# for row in cumvecs[:3, :]:
-#     fig.add_trace(go.Scatter3d(
-#         x=[0, row[0]],
-#         y=[0, row[1]],
-#         z=[0, row[2]],
-#         mode="lines",
-#         line=dict(
-#             color="red",
-#             width=4,
-#         ),
-#     ))
-# fig.add_trace(go.Scatter3d(
-#     x=[cumvecs[3,0], cumvecs[4,0]],
-#     y=[cumvecs[3,1], cumvecs[4,1]],
-#     z=[cumvecs[3,2], cumvecs[4,2]],
-#     mode="lines",
-#     line=dict(
-#         color="red",
-#         width=4,
-#     ),
-# ))
-# for row in cumvecs[3:, :]:
-#     fig.add_trace(go.Scatter3d(
-#         x=[cumvecs[-1,0], row[0]],
-#         y=[cumvecs[-1,1], row[1]],
-#         z=[cumvecs[-1,2], row[2]],
-#         mode="lines",
-#         line=dict(
-#             color="green",
-#             width=4,
-#         ),
-#     ))
-# for row in cumvecs[:3, :]:
-#     fig.add_trace(go.Scatter3d(
-#         x=[cumvecs[3,0], row[0]],
-#         y=[cumvecs[3,1], row[1]],
-#         z=[cumvecs[3,2], row[2]],
-#         mode="lines",
-#         line=dict(
-#             color="green",
-#             width=4,
-#         ),
-#     ))
-# axes_title_font = dict(family="Times", size=40)
-# axes_tick_font = dict(family="Times", size=15)
-# fig.update_layout(scene = dict(
-#     xaxis = dict(
-#         range=[-2, 1],
-#         dtick=0.5,
-#         title_font=axes_title_font,
-#         tickfont=axes_tick_font,
-#         backgroundcolor="rgb(200, 200, 230)",
-#         gridcolor="white",
-#         showbackground=True,
-#         zerolinecolor="white",),
-#     yaxis = dict(
-#         range=[-3, 1],
-#         dtick=0.5,
-#         title_font=axes_title_font,
-#         tickfont=axes_tick_font,
-#         backgroundcolor="rgb(230, 200,230)",
-#         gridcolor="white",
-#         showbackground=True,
-#         zerolinecolor="white"),
-#     zaxis = dict(
-#         range=[-0.5, 2.5],
-#         dtick=0.5,
-#         title_font=axes_title_font,
-#         tickfont=axes_tick_font,
-#         backgroundcolor="rgb(230, 230,200)",
-#         gridcolor="white",
-#         showbackground=True,
-#         zerolinecolor="white",),),
-# )
-# fig.show()
+coord_texts = ["0", "1", "2", "3", "4", "5"]
+fig = go.Figure()
+fig.add_trace(go.Scatter3d(
+    x=cumvecs[:,0],
+    y=cumvecs[:,1],
+    z=cumvecs[:,2],
+    text=coord_texts,
+    textfont=dict(
+        family="Times",
+        size=24,
+    ),
+    mode="text",
+))
+for row in cumvecs[:3, :]:
+    fig.add_trace(go.Scatter3d(
+        x=[0, row[0]],
+        y=[0, row[1]],
+        z=[0, row[2]],
+        mode="lines",
+        line=dict(
+            color="red",
+            width=4,
+        ),
+    ))
+fig.add_trace(go.Scatter3d(
+    x=[cumvecs[3,0], cumvecs[4,0]],
+    y=[cumvecs[3,1], cumvecs[4,1]],
+    z=[cumvecs[3,2], cumvecs[4,2]],
+    mode="lines",
+    line=dict(
+        color="red",
+        width=4,
+    ),
+))
+for row in cumvecs[3:, :]:
+    fig.add_trace(go.Scatter3d(
+        x=[cumvecs[-1,0], row[0]],
+        y=[cumvecs[-1,1], row[1]],
+        z=[cumvecs[-1,2], row[2]],
+        mode="lines",
+        line=dict(
+            color="green",
+            width=4,
+        ),
+    ))
+for row in cumvecs[:3, :]:
+    fig.add_trace(go.Scatter3d(
+        x=[cumvecs[3,0], row[0]],
+        y=[cumvecs[3,1], row[1]],
+        z=[cumvecs[3,2], row[2]],
+        mode="lines",
+        line=dict(
+            color="green",
+            width=4,
+        ),
+    ))
+axes_title_font = dict(family="Times", size=40)
+axes_tick_font = dict(family="Times", size=15)
+fig.update_layout(scene = dict(
+    xaxis = dict(
+        range=[-2, 1],
+        dtick=0.5,
+        title_font=axes_title_font,
+        tickfont=axes_tick_font,
+        backgroundcolor="rgb(200, 200, 230)",
+        gridcolor="white",
+        showbackground=True,
+        showticklabels=False,
+        zerolinecolor="white",),
+    yaxis = dict(
+        range=[-3, 1],
+        dtick=0.5,
+        title_font=axes_title_font,
+        tickfont=axes_tick_font,
+        backgroundcolor="rgb(230, 200,230)",
+        gridcolor="white",
+        showbackground=True,
+        showticklabels=False,
+        zerolinecolor="white"),
+    zaxis = dict(
+        range=[-0.5, 3],
+        dtick=0.5,
+        title_font=axes_title_font,
+        tickfont=axes_tick_font,
+        backgroundcolor="rgb(230, 230,200)",
+        gridcolor="white",
+        showbackground=True,
+        showticklabels=False,
+        zerolinecolor="white",),),
+)
+fig.show()
 
 # coord_texts = ["0", "1", "2", "3", "4", "5"]
 # fig = go.Figure()
@@ -238,7 +241,7 @@ while True:
 #     text=coord_texts,
 #     textfont=dict(
 #         family="Times",
-#         size=20,
+#         size=24,
 #     ),
 #     mode="text",
 # ))
@@ -275,6 +278,7 @@ while True:
 #         backgroundcolor="rgb(200, 200, 230)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white",),
 #     yaxis = dict(
 #         range=[-3, 1],
@@ -284,15 +288,17 @@ while True:
 #         backgroundcolor="rgb(230, 200,230)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white"),
 #     zaxis = dict(
-#         range=[-0.5, 2.5],
+#         range=[-0.5, 3],
 #         dtick=0.5,
 #         title_font=axes_title_font,
 #         tickfont=axes_tick_font,
 #         backgroundcolor="rgb(230, 230,200)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white",),),
 # )
 # fig.show()
@@ -306,7 +312,7 @@ while True:
 #     text=coord_texts,
 #     textfont=dict(
 #         family="Times",
-#         size=20,
+#         size=24,
 #     ),
 #     mode="text",
 # ))
@@ -321,6 +327,7 @@ while True:
 #         backgroundcolor="rgb(200, 200, 230)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white",),
 #     yaxis = dict(
 #         range=[-3, 1],
@@ -330,15 +337,17 @@ while True:
 #         backgroundcolor="rgb(230, 200,230)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white"),
 #     zaxis = dict(
-#         range=[-0.5, 2.5],
+#         range=[-0.5, 3],
 #         dtick=0.5,
 #         title_font=axes_title_font,
 #         tickfont=axes_tick_font,
 #         backgroundcolor="rgb(230, 230,200)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white",),),
 # )
 # fig.show()
@@ -352,7 +361,7 @@ while True:
 #     text=coord_texts,
 #     textfont=dict(
 #         family="Times",
-#         size=20,
+#         size=24,
 #     ),
 #     mode="text",
 # ))
@@ -367,6 +376,7 @@ while True:
 #         backgroundcolor="rgb(200, 200, 230)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white",),
 #     yaxis = dict(
 #         range=[-2, 1],
@@ -376,6 +386,7 @@ while True:
 #         backgroundcolor="rgb(230, 200,230)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white"),
 #     zaxis = dict(
 #         range=[-0.5, 1.5],
@@ -385,6 +396,7 @@ while True:
 #         backgroundcolor="rgb(230, 230,200)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white",),),
 # )
 # fig.show()
@@ -398,7 +410,7 @@ while True:
 #     text=wrdvecs_array_reduced_even_more.index,
 #     textfont=dict(
 #         family="Times",
-#         size=20,
+#         size=24,
 #     ),
 #     mode="text",
 # ))
@@ -412,6 +424,7 @@ while True:
 #         backgroundcolor="rgb(200, 200, 230)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white",),
 #     yaxis = dict(
 #         range=[-0.2, 0.1],
@@ -420,6 +433,7 @@ while True:
 #         backgroundcolor="rgb(230, 200,230)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white"),
 #     zaxis = dict(
 #         range=[-0.1, 0.1],
@@ -428,6 +442,7 @@ while True:
 #         backgroundcolor="rgb(230, 230,200)",
 #         gridcolor="white",
 #         showbackground=True,
+#         showticklabels=False,
 #         zerolinecolor="white",),),
 # )
 # fig.show()

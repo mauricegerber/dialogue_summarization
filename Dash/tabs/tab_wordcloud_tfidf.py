@@ -6,7 +6,27 @@ import plotly.graph_objects as go
 
 def tab_wordcloud_tfidf():
     vertical_space = "15px"
-    tab = dbc.Tab(label="Wordcloud TF-IDF", children=[
+    tab = dbc.Tab(label="TF-IDF graphic", children=[
+        html.Div(style={"height": vertical_space}),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.Div(
+                            children=[
+                                html.Span("This tab depicts a animated graphic of the TF-IDF algorithm applied to the selected transcript. "),
+                                html.Span("With the "),
+                                html.I("Textblock length "),
+                                html.Span("the block length is adjusted. "),
+                                html.Span("The x-axis shows the Term Frequency score of the word in the selected block and the y-axis shows the Inverse Document Frequency score, where 1/3 means the word occurs in 1 of 3 blocks over the document. "),
+                                html.Span("When the mouse is moved over the word, the total TF-IDF score can also be seen."),
+                                html.Span("The higher the score, the more influencial the word in this specific block."),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        ),
         html.Div(style={"height": vertical_space}),
         dbc.Row(
             [
