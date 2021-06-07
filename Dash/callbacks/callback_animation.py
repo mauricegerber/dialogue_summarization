@@ -124,7 +124,7 @@ def callback_animation(app, transcripts):
                 "xanchor": "left",
                 "currentvalue": {
                     "font": {"size": 20},
-                    "prefix": "Text block:",
+                    "prefix": "Textblock: ",
                     "visible": True,
                     "xanchor": "right"
                 },

@@ -140,7 +140,7 @@ def callback_animation_tfidf2(app, transcripts):
                 "xanchor": "left",
                 "currentvalue": {
                     "font": {"size": 20},
-                    "prefix": "Text block:",
+                    "prefix": "Textblock: ",
                     "visible": True,
                     "xanchor": "right"
                 },

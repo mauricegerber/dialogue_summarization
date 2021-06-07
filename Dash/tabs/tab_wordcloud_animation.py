@@ -14,13 +14,13 @@ def tab_wordcloud_animation():
                     [
                         html.Div(
                             children=[
-                                html.Span("This tab illustrates an animated Wordcloud. "),
-                                html.Span("With the "),
-                                html.I("Textblock length "),
-                                html.Span("Parameter the block length in minutes can be adjusted. "),
-                                html.Span("If the play button is clicked, the animation runs through each block and depicts the most frequent used word. "),
-                                html.Span("The slider can also be varried manually. The size of the circle and the text shows the frequency of the word. "),
-                                html.Span("Circels are added to ensure a smooth transition. "),
+                                html.Span("This tab provides an animated Wordcloud."),
+                                html.Span(" With the parameter "),
+                                html.I("Textblock length"),
+                                html.Span(" the block length in minutes can be adjusted."),
+                                html.Span(" When clicking the play button, the animation runs through each textblock and depicts the most frequent words."),
+                                html.Span(" The slider can also be adjusted manually."),
+                                html.Span(" The bigger the circle and font of a word, the more occurrences it has in the selected textblock."),
                             ],
                         ),
                     ],

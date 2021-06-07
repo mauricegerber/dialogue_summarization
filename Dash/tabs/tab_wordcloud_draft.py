@@ -15,12 +15,13 @@ def tab_wordcloud_draft():
                     [
                         html.Div(
                             children=[
-                                html.Span("This tab provides an graphical overview over the most frequent used words in each block. "),
-                                html.Span("With the "),
-                                html.I("Textblock length "),
-                                html.Span("Parameter the block length in minutes can be adjusted. "),
-                                html.Span("With the slider the individual block can be selected. "),
-                                html.Span("The Wordcloud bases on absolute frequency which means that the bigger the size of a word, the more frequent it is used in the selected paragraph."),
+                                html.Span("This tab provides a visual overview over the most frequent words in each text block."),
+                                html.Span(" With the parameter "),
+                                html.I("Textblock length"),
+                                html.Span(" the block length in minutes can be adjusted."),
+                                html.Span(" With the slider the individual blocks can be selected."),
+                                html.Span(" The Wordcloud is based on word frequency."),
+                                html.Span(" The bigger a word is written, the more occurrences it has in the selected textblock."),
                             ],
                         ),
                     ],

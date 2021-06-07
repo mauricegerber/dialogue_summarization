@@ -38,7 +38,7 @@ fig.add_trace(go.Scatter(
     mode="lines",
     line=dict(
         width=4,
-        color="#1f77b4",
+        color="#4472C4",
     ),
     name="Human",
 ))
@@ -52,7 +52,7 @@ for i in range(1, len(timestamps_human_s)-1):
         line=dict(
             width=3,
             dash="dot",
-            color="#1f77b4",
+            color="#4472C4",
     ))
 
 fig.add_trace(go.Scatter(
@@ -61,7 +61,7 @@ fig.add_trace(go.Scatter(
     mode="lines",
     line=dict(
         width=4,
-        color="#ff7f0e",
+        color="#ED7D31",
     ),
     name="TextTiling",
 ))
@@ -75,7 +75,7 @@ for i in range(1, len(timestamps_texttiling_s )-1):
         line=dict(
             width=3,
             dash="dot",
-            color="#ff7f0e",
+            color="#ED7D31",
     ))
 
 fig.add_trace(go.Scatter(

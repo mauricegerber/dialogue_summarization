@@ -62,8 +62,8 @@ def callback_animation_tfidf(app, transcripts):
 
             # fill in most of layout
             fig_dict["layout"] = go.Layout(margin={'t': 0, "b":0, "r":0, "l":0}, plot_bgcolor="rgba(0,0,0,0)")
-            fig_dict["layout"]["xaxis"] = {"title": "Frequency in Block", "showgrid": True, 'zeroline': True, 'visible': True, "range": [-0.001,0.014]}
-            fig_dict["layout"]["yaxis"] = {"title": "Inverse Document Frequency", "showgrid": True, 'zeroline': True, 'visible': True, "tickmode": "array", "tickvals": y_tickvals,
+            fig_dict["layout"]["xaxis"] = {"title": "Term frequency in current textblock", "showgrid": True, 'zeroline': True, 'visible': True, "range": [-0.001,max(tfidf_col)+0.001]}
+            fig_dict["layout"]["yaxis"] = {"title": "Inverse document frequency", "showgrid": True, 'zeroline': True, 'visible': True, "tickmode": "array", "tickvals": y_tickvals,
             "ticktext": y_ticktext, "type": "log"}
             fig_dict["layout"]["hovermode"] = "closest"
             fig_dict["layout"]["updatemenus"] = [
@@ -103,7 +103,7 @@ def callback_animation_tfidf(app, transcripts):
                 "xanchor": "left",
                 "currentvalue": {
                     "font": {"size": 20},
-                    "prefix": "Text block:",
+                    "prefix": "Textblock: ",
                     "visible": True,
                     "xanchor": "right"
                 },
@@ -130,7 +130,7 @@ def callback_animation_tfidf(app, transcripts):
                     "sizeref": 0.01
                 },
                 "customdata": dataset_by_block["score"],
-                "hovertemplate": '%{text}<br>TF-Score: %{x:.3f}<br>IDF-Score: %{y:.3f}<br>TF-IDF-Score: %{customdata:.3f}<extra></extra>'
+                "hovertemplate": '%{text}<br>TF: %{x:.3f}<br>IDF: %{y:.3f}<br>TF-IDF: %{customdata:.3f}<extra></extra>'
             }
             fig_dict["data"].append(data_dict)
 

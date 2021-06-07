@@ -15,16 +15,15 @@ def tab_textsplit():
                     [
                         html.Div(
                             children=[
-                                html.Span("This tab provides an implementation of a text split algorithm by Christoph Schock "),
+                                html.Span("This tab provides an implementation of the textsplit algorithm developed by Christoph Schock in 2020 "),
                                 html.A("[Link to GitHub]", href="https://github.com/chschock/textsplit", target="_blank"),
-                                html.Span(" which is based on a paper by Alexander A. Alemi and Paul Ginsparg "),
-                                html.A("[Link to paper].", href="https://arxiv.org/pdf/1503.05543.pdf", target="_blank"),
-                                html.Span(" The algorithm uses word embeddings to find subtopics where the boundaries are chosen such that the subtopics are coherent."),
-                                html.Span(" This coherence can be described as accumulated weighted cosine similarity of the words of a subtopic to the mean vector of that subtopic."),
-                                html.Span(" The parameter"),
-                                html.I(" Segment length"),
-                                html.Span(" can be adjusted to fine-tune the algorithm and affect the number of subtopics it detects."),
-                                html.Span(" For a detailed discussion of the algorithm please refer to chapter X in our paper [link not yet available]."),
+                                html.Span(" which is based on a paper by Alexander Alemi and Paul Ginsparg from 2015 "),
+                                html.A("[Link to paper]", href="https://arxiv.org/pdf/1503.05543.pdf", target="_blank"),
+                                html.Span(". The algorithm uses word embedding and similarity measures to determine subtopics."),
+                                html.Span(" For an explanation of the algorithm and its parameters we refer to our paper."),
+                                html.Span(" Note that when clicking"),
+                                html.I(" Apply"),
+                                html.Span(", the keyword extraction settings from tab 2 are used to display the keywords table."),
                             ],
                         ),
                     ],
@@ -122,7 +121,7 @@ def tab_textsplit():
                     id="textsplit_table",
                     columns=[
                         {"name": "Time", "id": "Start time", "presentation": "markdown"},
-                        {"name": "Keywords (tf-idf)", "id": "Keywords", "presentation": "markdown"},
+                        {"name": "Keywords", "id": "Keywords", "presentation": "markdown"},
                     ],
                     style_data_conditional=[
                         {"if": {"state": "selected"},

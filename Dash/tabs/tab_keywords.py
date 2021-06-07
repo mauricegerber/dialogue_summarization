@@ -13,11 +13,12 @@ def tab_keywords():
                     [
                         html.Div(
                             children=[
-                                html.Span("This tab provides implementations of several keyword extraction algorithms."),
-                                html.Span(" The keywords are displayed in the table in Tab 1."),
-                                html.Span(" As this tab is quite empty at the moment, more information or settings might get added."),
-                                html.Span(" Note that KeyBERT takes quite a while to compute compared to the others.")
-
+                                html.Span("This tab provides implementations of four keyword extraction algorithms."),
+                                html.Span(" For an explanation of the algorithms and their parameters we refer to our paper."),
+                                html.Span(" When clicking"),
+                                html.I(" Apply to transcript tab"),
+                                html.Span(", the keywords are shown in the table in tab 1."),
+                                html.Span(" Note that the execution time of KeyBERT is much longer than for the other three.")
                             ],
                         ),
                     ],
@@ -329,7 +330,7 @@ def tab_keywords():
                                             id="keybert_diversity",
                                             type="number",
                                             step=0.1,
-                                            value=1,
+                                            value=0,
                                         ),
                                     ],
                                     width="auto",
