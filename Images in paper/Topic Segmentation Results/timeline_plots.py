@@ -138,4 +138,4 @@ fig.update_layout(
     font=axes_tick_font
 )
 # fig.show()
-fig.write_image(path + "/Images in paper/Topic Segmentation Results/timeline_plot1.png")
+fig.write_image(path + "/Images in paper/Topic Segmentation Results/timeline_BAmeeting_2021-03-11.png")
