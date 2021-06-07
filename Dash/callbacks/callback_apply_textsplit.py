@@ -51,9 +51,9 @@ def callback_apply_textsplit(app, transcripts):
             transcript = transcripts[int(selected_transcript)]
 
             if selected_break_condition == "max_splits":
-                normalized_splits, splits, lengths_optimal = textsplit(transcript, max_splits-1, None)
+                normalized_splits, splits, lengths_optimal = textsplit(transcript, selected_language, max_splits-1, None)
             if selected_break_condition == "min_gain":
-                normalized_splits, splits, lengths_optimal = textsplit(transcript, None, min_gain)
+                normalized_splits, splits, lengths_optimal = textsplit(transcript, selected_language, None, min_gain)
 
             boundaries_timestamps = [transcript["Timestamp"][i] for i in normalized_splits]
             boundaries_time = [transcript["Time"][normalized_splits[i-1]] + " - " + transcript["Time"][normalized_splits[i]]

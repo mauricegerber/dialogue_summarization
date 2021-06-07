@@ -6,7 +6,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from textsplit.tools import get_segments
 from textsplit.algorithm import split_greedy
 
-def textsplit(transcript, max_splits=None, min_gain=None):
+def textsplit(transcript, language, max_splits=None, min_gain=None):
 
     text = ""
     utterance_breaks = [0]
@@ -16,7 +16,10 @@ def textsplit(transcript, max_splits=None, min_gain=None):
         text += utterance + " "
     del utterance_breaks[0]
 
-    wrdvec_path = "./functions/wrdvecs.bin"
+    if language == "english":
+        wrdvec_path = "./functions/wrdvecs.bin"
+    else:
+        wrdvec_path = "./functions/wrdvecs_german.bin"
     model = word2vec.load(wrdvec_path)
     wrdvecs = pd.DataFrame(model.vectors, index=model.vocab)
     del model

@@ -14,15 +14,15 @@ pio.kaleido.scope.default_width = 1920
 pio.kaleido.scope.default_height = 500
 
 timestamps_human = ["00:00", "19:34", "34:39", "41:44", "45:08", "47:12"]
-timestamps_texttiling = ["00:00", "13:40", "24:52", "26:57", "41:44", "47:12"]
-timestamps_textsplit = ["00:00", "19:34", "34:39", "41:44", "45:08", "47:12"]
+timestamps_texttiling = ["00:00", "07:21", "37:32", "47:12"]
+# timestamps_textsplit = ["00:00", "19:34", "34:39", "41:44", "45:08", "47:12"]
 
 def convert_to_seconds(t):
     return int(t[:2])*60 + int(t[3:])
 
 timestamps_human_s = [convert_to_seconds(t) for t in timestamps_human]
 timestamps_texttiling_s = [convert_to_seconds(t) for t in timestamps_texttiling]
-timestamps_textsplit_s = [convert_to_seconds(t) for t in timestamps_textsplit]
+# timestamps_textsplit_s = [convert_to_seconds(t) for t in timestamps_textsplit]
 
 last_min = int(timestamps_human[-1][:2])
 ticks = list(range(0, last_min, 5))
@@ -78,28 +78,28 @@ for i in range(1, len(timestamps_texttiling_s )-1):
             color="#ED7D31",
     ))
 
-fig.add_trace(go.Scatter(
-    x=timestamps_textsplit_s,
-    y=[y_position[0]] * len(timestamps_textsplit_s ),
-    mode="lines",
-    line=dict(
-        width=4,
-        color="#2ca02c",
-    ),
-    name="Textsplit",
-))
-for i in range(1, len(timestamps_textsplit_s )-1):
-    fig.add_shape(
-        type="line",
-        x0=timestamps_textsplit_s [i],
-        y0=y_position[0]-0.05,
-        x1=timestamps_textsplit_s [i],
-        y1=y_position[0]+0.05,
-        line=dict(
-            width=3,
-            dash="dot",
-            color="#2ca02c",
-    ))
+# fig.add_trace(go.Scatter(
+#     x=timestamps_textsplit_s,
+#     y=[y_position[0]] * len(timestamps_textsplit_s ),
+#     mode="lines",
+#     line=dict(
+#         width=4,
+#         color="#2ca02c",
+#     ),
+#     name="Textsplit",
+# ))
+# for i in range(1, len(timestamps_textsplit_s )-1):
+#     fig.add_shape(
+#         type="line",
+#         x0=timestamps_textsplit_s [i],
+#         y0=y_position[0]-0.05,
+#         x1=timestamps_textsplit_s [i],
+#         y1=y_position[0]+0.05,
+#         line=dict(
+#             width=3,
+#             dash="dot",
+#             color="#2ca02c",
+#     ))
 
 
 axes_title_font = dict(family="Times", size=50)
