@@ -8,8 +8,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
-import numpy as np
-import math
+
 pio.kaleido.scope.default_format = "png"
 pio.kaleido.scope.default_width = 1920
 pio.kaleido.scope.default_height = 500
