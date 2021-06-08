@@ -1,5 +1,5 @@
-from nltk.corpus import stopwords, wordnet
-from textblob import TextBlob
+#from nltk.corpus import stopwords, wordnet
+#from textblob import TextBlob
 import nltk
 from collections import Counter
 

@@ -233,7 +233,7 @@ text = ''
 for sentence in sentences:
     text = text + sentence + ' '
 r.extract_keywords_from_text(text)
-#print(r.get_ranked_phrases_with_scores()) # To get keyword phrases ranked highest to lowest.
+print(r.get_ranked_phrases_with_scores()) # To get keyword phrases ranked highest to lowest.
 print(r.get_ranked_phrases())
 #words.append(' '.join(r.get_ranked_phrases()))
 
