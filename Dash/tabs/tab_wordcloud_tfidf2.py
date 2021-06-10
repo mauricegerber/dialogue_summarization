@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 
 def tab_wordcloud_tfidf2():
     vertical_space = "15px"
-    tab = dbc.Tab(label="Wordcloud TF-IDF", children=[
+    tab = dbc.Tab(label="Wordcloud animation TF-IDF", children=[
         html.Div(style={"height": vertical_space}),
         dbc.Row(
             [
